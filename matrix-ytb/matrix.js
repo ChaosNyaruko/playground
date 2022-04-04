@@ -1,3 +1,4 @@
+console.log("testestest")
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
@@ -116,7 +117,7 @@ class FallinChar {
 
 let update = () => {
   if (fallingCharArr.length < maxCharCount) {
-    let fallingChar = new FallingChar(
+    let fallingChar = new FallinChar(
       Math.floor(Math.random() * maxColumns) * fontSize,
       (Math.random() * ch) / 2 - 50
     );
