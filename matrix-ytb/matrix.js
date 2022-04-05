@@ -83,7 +83,7 @@ let charArr = [
   "Ц",
 ];
 
-let maxCharCount = 300;
+let maxCharCount = 200;
 let fallingCharArr = [];
 let fontSize = 13;
 let maxColumns = cw / fontSize;
@@ -115,6 +115,18 @@ class FallinChar {
   }
 }
 
+let test = () => {
+    if (frames % 3 == 0) {
+        ctx.fillStyle = "#FF0000";
+    } else if (frames % 3 == 1) {
+        ctx.fillStyle = "#00FF00";
+    } else {
+        ctx.fillStyle = "#0000FF";
+    }
+    ctx.fillRect(0, 0, 150, 75);
+    frames++;
+};
+
 let update = () => {
   if (fallingCharArr.length < maxCharCount) {
     let fallingChar = new FallinChar(
@@ -128,9 +140,14 @@ let update = () => {
   for (let i = 0; i < fallingCharArr.length && frames % 2 == 0; i++) {
     fallingCharArr[i].draw(ctx);
   }
+  // if (fallingCharArr.length >= maxColumns) {
+  //     cancelAnimationFrame();
+  // }
 
   requestAnimationFrame(update);
+  // requestAnimationFrame(test);
   frames++;
 };
 
 update();
+
