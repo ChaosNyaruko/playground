@@ -1,6 +1,10 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"log"
+	"time"
+)
 
 type I interface {
 	Go() string
@@ -33,6 +37,31 @@ func selectSort(nums []int) {
 func main() {
 	mi := my{}
 	fmt.Println(mi.Go())
+	c := make(chan int)
+	go func() {
+		select {
+		case _ = <-c:
+			log.Println("goroutine1")
+		}
+	}()
+	go func() {
+		select {
+		case _ = <-c:
+			log.Println("goroutine2")
+		}
+	}()
+	go func() {
+		select {
+		case _ = <-c:
+			log.Println("goroutine3")
+		}
+	}()
+	go func() {
+		time.Sleep(1 * time.Second)
+		c <- 1
+		log.Println("sent")
+	}()
+	time.Sleep(1 * time.Minute)
 }
 
 type my struct{}
