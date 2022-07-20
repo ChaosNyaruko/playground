@@ -35,7 +35,9 @@ def composite_identity(f, g):
     >>> b1(4)                            # (4 + 1)^2 != 4^2 + 1
     False
     """
-    "*** YOUR CODE HERE ***"
+    def c(x):
+        return compose1(f,g)(x) == compose1(g, f)(x)
+    return c
 
 def count_cond(condition):
     """Returns a function with one parameter N that counts all the numbers from
@@ -62,7 +64,15 @@ def count_cond(condition):
     >>> count_primes(20)   # 2, 3, 5, 7, 11, 13, 17, 19
     8
     """
-    "*** YOUR CODE HERE ***"
+    def counter(n):
+        i = 1
+        count = 0
+        while i <= n:
+            if condition(n, i):
+                count += 1
+            i += 1
+        return count
+    return counter
 
 def cycle(f1, f2, f3):
     """Returns a function that is itself a higher-order function.
@@ -90,4 +100,11 @@ def cycle(f1, f2, f3):
     >>> do_two_cycles(1)
     19
     """
-    "*** YOUR CODE HERE ***"
+    def f(n):
+        funcs = [f1, f2, f3]
+        def inner(x):
+            if n == 0:
+                return x
+            return funcs[(n-1) % 3](f(n-1)(x))
+        return inner
+    return f
