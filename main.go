@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
+	"sync"
 	"time"
 )
 
@@ -34,7 +36,36 @@ func selectSort(nums []int) {
 	}
 }
 
+type server1 struct {
+}
+
+func (s *server1) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("I'm server 1!\n"))
+}
+
+type server2 struct {
+}
+
+func (s *server2) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("I'm server 2!\n"))
+}
+
 func main() {
+	log.Println("start")
+	var wg sync.WaitGroup
+	go func() {
+		time.Sleep(1 * time.Second)
+		wg.Add(1)
+		defer wg.Done()
+		log.Println("lauching server 2")
+		log.Fatalf("server2:%v", http.ListenAndServe("localhost:8081", new(server2)))
+	}()
+	log.Println("lauching server 1")
+	log.Fatalf("server1:%v", http.ListenAndServe("localhost:8081", new(server1)))
+
+	wg.Wait()
+}
+func _main() {
 	mi := my{}
 	fmt.Println(mi.Go())
 	c := make(chan int)
