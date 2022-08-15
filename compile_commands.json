@@ -1,5 +1,0 @@
-[
-  { "directory": "~/playground",
-    "arguments": ["/usr/bin/clang++", "-std=c++11", "-o", "main"],
-    "file": "main.cpp" }
-]
