@@ -1,0 +1,73 @@
+* Outliner
+Text text text!
+** Subsection
+** yet more
+* Markup
+*Bold*, /italic/, =vertatim=, +strikethrough+
+
+- bulleted
+- list
+- items
+
+[[https://www.bilibili.com/video/BV19t411q7Pa][Org-mode]]
+(ctrl-c ctrl-l to create it) (ctrl-c ctrl-o to visit it)
+
+[[file:.vimrc][vimrc]]
+(local file is also supported, maybe ctrl-c l is needed? even mail/...)
+
+* Tables
+
+| Some | Data            |
+|------+-----------------|
+|   12 | buckle the shoe |
+|   34 | shut the door   |
+
+(Tab/M-up/M-down)
+
+* Export to other formats
+
+ctrl-c ctrl-e
+
+#+TITLE: A Gentle Introductin to Org-mode
+#+OPTIONS: toc:nil
+
+* Source Code
+
+ctrl-c '
+
+#+BEGIN_SRC ruby
+  def fact(n)
+    if n == 0
+      1
+    else
+      n * fact(n-1)
+    end
+  end
+  fact(5)
+#+END_SRC
+
+#+RESULTS:
+: :fact
+
+* LaTex integration
+- Characters: \alpha \rightarrow \beta
+- $O(n \log n)$
+
+\begin{align*}
+  3 * 2 + &= 6 + 1 \\
+        &= 7
+\end{align*}
+
+* Literate programming
+
+* Todo stuff!
+
+** TODO explain todo lists (shift+meta+enter, create another todo)
+** DONE cycle through states (ctrl-c ctrl-t)
+open agenda(ctrl-c ctrl-d)
+DEADLINE: <2022-08-20 Sat> (shift+up, shift+down)
+
+
+
+
+
