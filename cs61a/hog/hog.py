@@ -22,6 +22,14 @@ def roll_dice(num_rolls, dice=six_sided):
     assert num_rolls > 0, 'Must roll at least once.'
     # BEGIN PROBLEM 1
     "*** YOUR CODE HERE ***"
+    s = 0
+    while num_rolls > 0:
+        cur = dice()
+        if cur == 1:
+            return 1
+        s += cur
+        num_rolls -= 1
+    return s
     # END PROBLEM 1
 
 
@@ -33,6 +41,8 @@ def free_bacon(score):
     assert score < 100, 'The game should be over.'
     # BEGIN PROBLEM 2
     "*** YOUR CODE HERE ***"
+    a, b = score // 10, score % 10
+    return abs(a-b)+2
     # END PROBLEM 2
 
 
@@ -51,6 +61,9 @@ def take_turn(num_rolls, opponent_score, dice=six_sided):
     assert opponent_score < 100, 'The game should be over.'
     # BEGIN PROBLEM 3
     "*** YOUR CODE HERE ***"
+    if num_rolls == 0:
+        return free_bacon(opponent_score)
+    return roll_dice(num_rolls, dice)
     # END PROBLEM 3
 
 
@@ -58,6 +71,9 @@ def is_swap(score0, score1):
     """Return whether one of the scores is an integer multiple of the other."""
     # BEGIN PROBLEM 4
     "*** YOUR CODE HERE ***"
+    if score0 <= 1 or score1 <= 1:
+        return False
+    return score0 % score1 == 0 or score1 % score0 == 0
     # END PROBLEM 4
 
 
@@ -97,6 +113,28 @@ def play(strategy0, strategy1, score0=0, score1=0, dice=six_sided,
     player = 0  # Which player is about to take a turn, 0 (first) or 1 (second)
     # BEGIN PROBLEM 5
     "*** YOUR CODE HERE ***"
+    ss = [strategy0, strategy1]
+    while True:
+        s = ss[player]
+        if player == 0:
+            num_rolls = s(score0, score1)
+            my_score = score0
+            opponent_score = score1
+        else:
+            num_rolls = s(score1, score0)
+            my_score = score1
+            opponent_score = score0
+        my_score += take_turn(num_rolls, opponent_score, dice)
+        # print("player%d rolls%d, cur_score:%d"%(player, num_rolls, my_score))
+        if is_swap(my_score, opponent_score):
+            my_score, opponent_score = opponent_score, my_score
+        if player == 0:
+            score0, score1 = my_score, opponent_score
+        else:
+            score0, score1 = opponent_score, my_score
+        if score0 >= goal or score1 >= goal:
+            break
+        player = other(player)
     # END PROBLEM 5
     return score0, score1
 
