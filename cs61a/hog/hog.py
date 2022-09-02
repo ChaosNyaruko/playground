@@ -144,6 +144,7 @@ def play(strategy0, strategy1, score0=0, score1=0, dice=six_sided,
         else:
             score0, score1 = opponent_score, my_score
         player = other(player)
+        say = say(score0, score1)
     # END PROBLEM 5
     return score0, score1
 
@@ -219,6 +220,21 @@ def announce_highest(who, previous_high=0, previous_score=0):
     assert who == 0 or who == 1, 'The who argument should indicate a player.'
     # BEGIN PROBLEM 7
     "*** YOUR CODE HERE ***"
+    def f(s0, s1):
+        if who == 0:
+            s = s0
+        else:
+            s = s1
+        gain = s - previous_score
+        new_high = previous_high
+        if gain > previous_high:
+            new_high = gain
+            if gain == 1:
+                print("%d point! That's the biggest gain yet for Player %d" % (gain, who))
+            else:
+                print("%d points! That's the biggest gain yet for Player %d" % (gain, who))
+        return announce_highest(who, new_high, s)
+    return f
     # END PROBLEM 7
 
 
@@ -258,6 +274,12 @@ def make_averaged(fn, num_samples=1000):
     """
     # BEGIN PROBLEM 8
     "*** YOUR CODE HERE ***"
+    def avg(*args):
+        res = 0
+        for _ in range(num_samples):
+            res += fn(*args)
+        return res / num_samples
+    return avg
     # END PROBLEM 8
 
 
@@ -272,6 +294,14 @@ def max_scoring_num_rolls(dice=six_sided, num_samples=1000):
     """
     # BEGIN PROBLEM 9
     "*** YOUR CODE HERE ***"
+    m = 0
+    index = 0
+    for i in range(1, 11):
+        avg = make_averaged(roll_dice, num_samples)(i, dice)
+        if avg > m:
+            m = avg
+            index = i
+    return index 
     # END PROBLEM 9
 
 
@@ -300,16 +330,16 @@ def run_experiments():
         six_sided_max = max_scoring_num_rolls(six_sided)
         print('Max scoring num rolls for six-sided dice:', six_sided_max)
 
-    if False:  # Change to True to test always_roll(8)
+    if True:  # Change to True to test always_roll(8)
         print('always_roll(8) win rate:', average_win_rate(always_roll(8)))
 
-    if False:  # Change to True to test bacon_strategy
+    if True:  # Change to True to test bacon_strategy
         print('bacon_strategy win rate:', average_win_rate(bacon_strategy))
 
-    if False:  # Change to True to test swap_strategy
+    if True:  # Change to True to test swap_strategy
         print('swap_strategy win rate:', average_win_rate(swap_strategy))
 
-    if False:  # Change to True to test final_strategy
+    if True:  # Change to True to test final_strategy
         print('final_strategy win rate:', average_win_rate(final_strategy))
 
     "*** You may add additional experiments as you wish ***"
@@ -320,7 +350,9 @@ def bacon_strategy(score, opponent_score, margin=8, num_rolls=4):
     rolls NUM_ROLLS otherwise.
     """
     # BEGIN PROBLEM 10
-    return 4  # Replace this statement
+    if free_bacon(opponent_score) >= margin:
+        return 0
+    return num_rolls
     # END PROBLEM 10
 
 
@@ -330,7 +362,15 @@ def swap_strategy(score, opponent_score, margin=8, num_rolls=4):
     NUM_ROLLS.
     """
     # BEGIN PROBLEM 11
-    return 4  # Replace this statement
+    gain = free_bacon(opponent_score)
+    score += gain
+    if gain >= margin and not is_swap(score, opponent_score):
+        return 0
+
+    if is_swap(score, opponent_score) and opponent_score >= score + margin:
+        return 0
+        
+    return num_rolls
     # END PROBLEM 11
 
 
@@ -340,6 +380,7 @@ def final_strategy(score, opponent_score):
     *** YOUR DESCRIPTION HERE ***
     """
     # BEGIN PROBLEM 12
+    return swap_strategy(score, opponent_score)
     return 4  # Replace this statement
     # END PROBLEM 12
 
