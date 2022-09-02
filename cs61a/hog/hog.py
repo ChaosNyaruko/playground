@@ -23,15 +23,24 @@ def roll_dice(num_rolls, dice=six_sided):
     # BEGIN PROBLEM 1
     "*** YOUR CODE HERE ***"
     s = 0
-    while num_rolls > 0:
+    pigout = False
+    for _ in range(num_rolls):
         cur = dice()
         if cur == 1:
-            return 1
+            pigout = True
+            continue
         s += cur
-        num_rolls -= 1
-    return s
+    return s if not pigout else 1
+    # ret = 0
+    # pigout = False
+    # for _ in range(num_rolls):
+    #     score = dice()
+    #     if score == 1:
+    #         pigout = True
+    #         continue
+    #     ret += score
+    # return 1 if pigout else ret
     # END PROBLEM 1
-
 
 def free_bacon(score):
     """Return the points scored from rolling 0 dice (Free Bacon).
@@ -115,6 +124,8 @@ def play(strategy0, strategy1, score0=0, score1=0, dice=six_sided,
     "*** YOUR CODE HERE ***"
     ss = [strategy0, strategy1]
     while True:
+        if score0 >= goal or score1 >= goal:
+            break
         s = ss[player]
         if player == 0:
             num_rolls = s(score0, score1)
@@ -132,8 +143,6 @@ def play(strategy0, strategy1, score0=0, score1=0, dice=six_sided,
             score0, score1 = my_score, opponent_score
         else:
             score0, score1 = opponent_score, my_score
-        if score0 >= goal or score1 >= goal:
-            break
         player = other(player)
     # END PROBLEM 5
     return score0, score1
