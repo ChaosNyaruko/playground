@@ -83,4 +83,6 @@ def mean(s):
     """
     # BEGIN Question 1
     "*** YOUR CODE HERE ***"
+    assert s, 'empty list'
+    return sum(s) / len(s)
     # END Question 1
