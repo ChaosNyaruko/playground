@@ -184,6 +184,9 @@ def weight(size):
 def size(w):
     """Select the size of a weight."""
     "*** YOUR CODE HERE ***"
+    if is_weight(w):
+        return label(w)
+    return 0
 
 def is_weight(w):
     """Whether w is a weight, not a mobile."""
