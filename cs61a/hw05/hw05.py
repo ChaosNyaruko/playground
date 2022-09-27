@@ -528,7 +528,7 @@ def mul_interval(x, y):
     p2 = lower_bound(x) * upper_bound(y)
     p3 = upper_bound(x) * lower_bound(y)
     p4 = upper_bound(x) * upper_bound(y)
-    return [min(p1, p2, p3, p4), max(p1, p2, p3, p4)]
+    return interval(min(p1, p2, p3, p4), max(p1, p2, p3, p4))
 
 def sub_interval(x, y):
     """Return the interval that contains the difference between any value in x
@@ -545,7 +545,6 @@ def div_interval(x, y):
     "*** YOUR CODE HERE ***"
     assert (upper_bound(y) * lower_bound(y)) > 0, 'divisor should not span zero'
     reciprocal_y = interval(1/upper_bound(y), 1/lower_bound(y))
-    print(type(x), type(reciprocal_y), x, reciprocal_y)
     return mul_interval(x, reciprocal_y)
 
 def par1(r1, r2):
@@ -566,8 +565,8 @@ def check_par():
     >>> lower_bound(x) != lower_bound(y) or upper_bound(x) != upper_bound(y)
     True
     """
-    r1 = interval(1, 1) # Replace this line!
-    r2 = interval(1, 1) # Replace this line!
+    r1 = interval(2, 4) # Replace this line!
+    r2 = interval(2, 4) # Replace this line!
     return r1, r2
 
 def multiple_references_explanation():
