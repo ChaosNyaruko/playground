@@ -582,6 +582,15 @@ def quadratic(x, a, b, c):
     '0 to 10'
     """
     "*** YOUR CODE HERE ***"
+    f = lambda t: a * t * t + b * t + c
+    e = -b / (2*a)
+    l, r = lower_bound(x), upper_bound(x)
+    if e >= l and e <= r:
+        left, mid ,right = f(l), f(e), f(r)
+        return interval(min(left, mid, right), max(left, mid, right))
+    else:
+        left, right = f(l), f(r)
+        return interval(min(left, right), max(left, right))
 
 def polynomial(x, c):
     """Return the interval that is the range of the polynomial defined by
@@ -595,4 +604,38 @@ def polynomial(x, c):
     '18.0 to 23.0'
     """
     "*** YOUR CODE HERE ***"
+    n = len(c)
+    f = lambda x: sum(c[i] * pow(x, i) for i in range(n))
+    # (n - 1)*c[n-1]*x**(n-2)
+    df = lambda x: sum([i * c[i] * pow(x, i-1) for i in range(1,n)]) # derivative of the polynomial
+    ddf = lambda x: sum([i * (i - 1) * c[i] * pow(x, i-2) for i in range(2, n)])
+    # we want to find f(x) = 0 x -> interval
+    # uisng Newton's method
+    def approx_eq(x, y, tolerance=1e-15):
+        return abs(x - y) < tolerance
 
+    def improve(update, close, guess=1, k = 100):
+        while not close(guess) and k > 0:
+            guess = update(guess)
+            k -= 1
+        return guess
+
+    def newton_update(f, df):
+        def update(x):
+            return x - f(x) / df(x)
+        return update
+
+    def find_zero(f, df, guess):
+        def near_zero(x):
+            return approx_eq(df(x), 0)
+        return improve(newton_update(f, df), near_zero, guess, 100)
+
+    l, r = lower_bound(x), upper_bound(x) 
+    gap = (r - l) / 20
+    s = [l + gap * i for i in range(20)]
+    exs = [find_zero(df, ddf, g) for g in s] 
+    exs = [g for g in exs if g > l and g < r] + [l, r]
+    # print(exs)
+    ys = [f(x) for x in exs]
+    # print(ys)
+    return interval(min(ys), max(ys))
