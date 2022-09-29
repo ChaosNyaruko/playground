@@ -96,4 +96,8 @@ fsm.locked = True
 
 # Player:
 # The Player should start at sather_gate.
-me = None
+class Player:
+    def __init__(self, name, place):
+        self.name = name
+        self.place = place
+me = Player("john", sather_gate)

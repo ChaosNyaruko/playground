@@ -20,3 +20,10 @@ def vending_machine(snacks):
     'chocolate'
     """
     "*** YOUR CODE HERE ***"
+    index = 0
+    n = len(snacks)
+    def sell():
+        nonlocal index
+        index += 1
+        return snacks[(index - 1) % n]
+    return sell
