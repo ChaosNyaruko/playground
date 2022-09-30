@@ -1,4 +1,4 @@
-passphrase = '*** PASSPHRASE HERE ***'
+passphrase = 'CS61A'
 
 def survey(p):
     """
@@ -36,6 +36,12 @@ class Fib():
 
     def next(self):
         "*** YOUR CODE HERE ***"
+        if self.value == 0:
+            ret = Fib(1)
+        else:
+            ret = Fib(self.value + self.prev)
+        ret.prev = self.value
+        return ret
 
     def __repr__(self):
         return str(self.value)
@@ -78,3 +84,32 @@ class VendingMachine:
     'Here is your soda.'
     """
     "*** YOUR CODE HERE ***"
+    def __init__(self, name, price):
+        self.stock = 0
+        self.balance = 0
+        self.name = name
+        self.price = price
+
+    def vend(self):
+        if self.stock == 0:
+            return 'Machine is out of stock.'
+        if self.balance < self.price:
+            return 'You must deposit ${} more.'.format(self.price - self.balance)
+        
+        self.stock -= 1
+        change = self.balance - self.price
+        self.balance = 0
+        if change > 0:
+            return 'Here is your {} and ${} change.'.format(self.name, change)
+        return 'Here is your {}.'.format(self.name)
+
+    def deposit(self, money):
+        if self.stock == 0:
+            return 'Machine is out of stock. Here is your ${}.'.format(money)
+        self.balance += money
+        return 'Current balance: ${}'.format(self.balance)
+
+    def restock(self, stock):
+        self.stock += stock
+        return 'Current {} stock: {}'.format(self.name, self.stock)
+
