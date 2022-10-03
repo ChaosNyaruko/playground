@@ -2,29 +2,54 @@
   (cdr (cdr s)))
 
 (define (cadr s)
-  'YOUR-CODE-HERE
+  (car (cdr s))
 )
 
 (define (caddr s)
-  'YOUR-CODE-HERE
+  (car (cddr s))
 )
 
 (define (sign x)
-  'YOUR-CODE-HERE
+  (cond ((> x 0) 1)
+        ((< x 0) -1)
+        (else 0)
+  )
 )
 
 (define (square x) (* x x))
 
 (define (pow b n)
-  'YOUR-CODE-HERE
+  (cond
+    ((= n 0) 1)
+    ((= n 1) b)
+    ((even? n) (square (pow b (quotient n 2))))
+    ((odd? n) (* b (square (pow b (quotient n 2)))))
+    )
 )
 
 (define (ordered? s)
-  'YOUR-CODE-HERE
+  (cond 
+    ((null? s) #t)
+     ((null? (cdr s)) #t)
+     ((> (car s) (cadr s)) #f)
+     (else (ordered? (cdr s)))
+    )
 )
 
+; (1 (2.3))
 (define (nodots s)
-  'YOUR-CODE-HERE
+  (cond
+    ((null? s) nil)
+    ((not (pair? s)) (cons s nil))
+    ; s is a pair
+    (else (cons (cond 
+                   ((pair? (car s)) (nodots (car s)))
+                   (else (car s))
+                )
+                (nodots (cdr s))
+          )
+    )
+  )
 )
 
 ; Sets as sorted lists
@@ -33,8 +58,9 @@
 
 (define (contains? s v)
     (cond ((empty? s) #f)
-          'YOUR-CODE-HERE
-          (else nil) ; replace this line
+          ((= (car s) v) #t)
+          ((> (car s) v) False)
+          (else (contains? (cdr s) v)) ; replace this line
           ))
 
 ; Equivalent Python code, for your reference:
@@ -54,14 +80,17 @@
 
 (define (add s v)
     (cond ((empty? s) (list v))
-          'YOUR-CODE-HERE
-          (else nil) ; replace this line
+          ((null? s) (cons v nil))
+          ((< v (car s)) (cons v s))
+          ((> v (car s)) (cons (car s) (add (cdr s) v)))
+          (else s) ; replace this line
           ))
 
 (define (intersect s t)
     (cond ((or (empty? s) (empty? t)) nil)
-          'YOUR-CODE-HERE
-          (else nil) ; replace this line
+          ((= (car s) (car t)) (cons (car s) (intersect (cdr s) (cdr t))))
+          ((< (car s) (car t)) (intersect (cdr s) t))
+          (else  (intersect s (cdr t))) ; replace this line
           ))
 
 ; Equivalent Python code, for your reference:
@@ -81,6 +110,8 @@
 (define (union s t)
     (cond ((empty? s) t)
           ((empty? t) s)
-          'YOUR-CODE-HERE
-          (else nil) ; replace this line
+          ; 'YOUR-CODE-HERE
+          ((> (car s) (car t)) (cons (car t) (union s (cdr t))))
+          ((< (car s) (car t)) (cons (car s) (union (cdr s) t)))
+          (else (cons (car s) (union (cdr s) (cdr t)))) ; replace this line
           ))
