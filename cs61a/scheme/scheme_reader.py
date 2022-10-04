@@ -121,6 +121,7 @@ def scheme_read(src):
     elif val == "'":
         # BEGIN PROBLEM 7
         "*** YOUR CODE HERE ***"
+        return Pair('quote', Pair(scheme_read(src), nil))
         # END PROBLEM 7
     elif val not in DELIMITERS:
         return val
@@ -149,6 +150,11 @@ def read_tail(src):
         elif src.current() == '.':
             # BEGIN PROBLEM 2
             "*** YOUR CODE HERE ***"
+            src.remove_front()
+            val = scheme_read(src)
+            if src.remove_front() != ')': # remove and guarantee a valid dotted pair
+                raise SyntaxError('missing \')\' for dotted pairs')
+            return val
             # END PROBLEM 2
         else:
             # BEGIN PROBLEM 1
