@@ -59,7 +59,7 @@ def eval_all(expressions, env):
     e = expressions
     res = None
     while e is not nil:
-        res = scheme_eval(e.first, env) 
+        res = scheme_eval(e.first, env, e.second is nil) 
         e = e.second
     return res 
     # END PROBLEM 8
@@ -276,9 +276,9 @@ def do_if_form(expressions, env):
     """Evaluate an if form."""
     check_form(expressions, 2, 3)
     if scheme_truep(scheme_eval(expressions.first, env)):
-        return scheme_eval(expressions.second.first, env)
+        return scheme_eval(expressions.second.first, env, True)
     elif len(expressions) == 3:
-        return scheme_eval(expressions.second.second.first, env)
+        return scheme_eval(expressions.second.second.first, env, True)
 
 def do_and_form(expressions, env):
     """Evaluate a (short-circuited) and form."""
@@ -287,7 +287,7 @@ def do_and_form(expressions, env):
     if expressions is nil:
         return True
     if expressions.second is nil:
-        return scheme_eval(expressions.first, env)
+        return scheme_eval(expressions.first, env, True)
     if scheme_falsep(scheme_eval(expressions.first, env)):
         return False
     return do_and_form(expressions.second, env)
@@ -299,7 +299,7 @@ def do_or_form(expressions, env):
     "*** YOUR CODE HERE ***"
     if expressions is nil:
         return False
-    f = scheme_eval(expressions.first, env)
+    f = scheme_eval(expressions.first, env, expressions.second is nil)
     if scheme_falsep(f):
         return do_or_form(expressions.second,env)
     return f
@@ -481,7 +481,7 @@ class Promise:
 
     def evaluate(self):
         if self.expression is not None:
-            self.value = scheme_eval(self.expression, self.env.make_child_frame(nil, nil))
+            self.value = scheme_eval(self.expression, self.env.make_child_frame(nil, nil), True)
             self.expression = None
         return self.value
 
@@ -497,7 +497,7 @@ def do_delay_form(expressions, env):
 def do_cons_stream_form(expressions, env):
     """Evaluate a cons-stream form."""
     check_form(expressions, 2, 2)
-    return Pair(scheme_eval(expressions.first, env),
+    return Pair(scheme_eval(expressions.first, env, True),
                 do_delay_form(expressions.second, env))
 
 SPECIAL_FORMS['cons-stream'] = do_cons_stream_form
@@ -527,19 +527,26 @@ def optimize_tail_calls(original_scheme_eval):
         """Evaluate Scheme expression EXPR in environment ENV. If TAIL,
         return a Thunk containing an expression for further evaluation.
         """
+        # raise Exception('{} in optimize_tail_calls'.format(expr))
         if tail and not scheme_symbolp(expr) and not self_evaluating(expr):
+            # print("return Thunk {}".format(expr))
             return Thunk(expr, env)
         else:
             result = Thunk(expr, env)
         # BEGIN
         "*** YOUR CODE HERE ***"
+        # print("result Thunk {}".format(result))
+        while isinstance(result, Thunk):
+            # print("isinstance Thunk {}".format(result))
+            result = original_scheme_eval(result.expr, result.env)
+        return result
         # END
     return optimized_eval
 
 ################################################################
 # Uncomment the following line to apply tail call optimization #
 ################################################################
-# scheme_eval = optimize_tail_calls(scheme_eval)
+scheme_eval = optimize_tail_calls(scheme_eval)
 
 
 ####################
