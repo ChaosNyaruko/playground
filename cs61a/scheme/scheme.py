@@ -34,6 +34,10 @@ def scheme_eval(expr, env, _=None): # Optional third argument is ignored
         "*** YOUR CODE HERE ***"
         operator = scheme_eval(first, env)
         check_procedure(operator)
+        if isinstance(operator, MacroProcedure):
+            # print(rest)
+            return scheme_eval(operator.apply_macro(rest, env), env)
+
         args = rest.map(lambda x: scheme_eval(x, env))
         return scheme_apply(operator, args, env)
         # END PROBLEM 5
@@ -362,6 +366,16 @@ def do_define_macro(expressions, env):
     """Evaluate a define-macro form."""
     # BEGIN Problem 21
     "*** YOUR CODE HERE ***"
+    check_form(expressions, 2)
+    target = expressions.first
+    if isinstance(target, Pair) and scheme_symbolp(target.first):
+        func_name = target.first
+        formals = target.second
+        body = expressions.second
+        env.define(func_name, MacroProcedure(formals, body, env))
+        return func_name
+    else:
+        raise SchemeError('invalid use of macro')
     # END Problem 21
 
 
