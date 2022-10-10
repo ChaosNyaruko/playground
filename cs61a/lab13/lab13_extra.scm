@@ -1,6 +1,13 @@
 ; Q4
 (define (rle s)
-  'YOUR-CODE-HERE
+  (define (helper prev cnt s) 
+    (cond 
+           ((null? s) (cons-stream (list prev cnt) nil))
+           ((eq? prev (car s)) (helper prev (+ cnt 1) (cdr-stream s)))
+           (else (cons-stream (list prev cnt) (helper (car s) 1 (cdr-stream s))))
+           )
+    )
+  (if (null? s) nil (helper (car s) 1 (cdr-stream s)))
 )
 
 ; Q4 testing functions
@@ -15,9 +22,30 @@
 )
 
 ; Q5
+; (define (insert n s)
+;   (define (helper n prev after)
+;     (cond ((null? after) (append prev (list n)))
+;         ((> n (car after)) (helper n (append prev (list (car after))) (cdr after)))
+;         ; insert before (after)
+;         (else (append prev (list n) after))
+;         )
+;    )
+;   (helper n nil s)
+; )
+
+; ref, still not constant space
 (define (insert n s)
-  'YOUR-CODE-HERE
+    (define (helper n prev suf)
+      (if (null? suf) (append prev (list n))
+        (if (< n (car suf))
+            (append (if (null? prev) (list n) (append prev (list n))) suf)
+            (helper n (append prev (list (car suf))) (cdr suf))
+        )
+      )
+    )
+    (helper n nil s)
 )
+
 
 ; Q6
 (define (deep-map fn s)
