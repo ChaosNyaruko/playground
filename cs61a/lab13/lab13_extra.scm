@@ -49,8 +49,10 @@
 
 ; Q6
 (define (deep-map fn s)
-  'YOUR-CODE-HERE
-  nil
+  (cond ((null? s) nil)
+        ((list? (car s)) (cons (deep-map fn (car s)) (deep-map fn (cdr s))))
+        ( else (cons (fn (car s)) (deep-map fn (cdr s))))
+  )
 )
 
 ; Q7
@@ -69,16 +71,20 @@
 ; Implementing and using these helper procedures is optional. You are allowed
 ; to delete them.
 (define (unique s)
-  'YOUR-CODE-HERE
-  nil
+  (cond ((null? s) nil)
+        (else (cons (car s) (filter (lambda (x) (not (eq? (car s) x))) (unique (cdr s)))))
+        )
 )
 
 (define (count name s)
-  'YOUR-CODE-HERE
-  nil
+  (cond ((null? s) 0)
+        ((eq? (car s) name) (+ 1 (count name (cdr s))))
+        (else (count name (cdr s)))
+        )
 )
 
 (define (tally names)
-  'YOUR-CODE-HERE
-  nil
+  (map (lambda (x) (cons x (count x names)))  (unique names))
+  ; expected ((james . 1)) not ((james 1))
+  ; (map (lambda (x) (list x (count x names)))  (unique names))
 )
