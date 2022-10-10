@@ -29,25 +29,54 @@ CREATE TABLE sizes AS
 
 -- The size of each dog
 CREATE TABLE size_of_dogs AS
-  SELECT "REPLACE THIS LINE WITH YOUR SOLUTION";
+  SELECT dogs.name, sizes.size /*, sizes.min, sizes.max*/
+  FROM dogs, sizes
+  WHERE dogs.height > sizes.min AND dogs.height <= sizes.max;
 
 -- All dogs with parents ordered by decreasing height of their parent
 CREATE TABLE by_height AS
-  SELECT "REPLACE THIS LINE WITH YOUR SOLUTION";
+  SELECT p.child as name
+  FROM parents as p, dogs as d
+  WHERE p.parent = d.name
+  ORDER BY d.height desc;
 
 -- Filling out this helper table is optional
 CREATE TABLE siblings AS
-  SELECT "REPLACE THIS LINE WITH YOUR SOLUTION";
+  SELECT a.child as big, b.child as small
+  FROM parents as a, parents as b
+  WHERE a.parent = b.parent AND a.child < b.child;
 
 -- Sentences about siblings that are the same size
 CREATE TABLE sentences AS
-  SELECT "REPLACE THIS LINE WITH YOUR SOLUTION";
+  SELECT a.big || " and " || a.small || " are " || b.size || " siblings" as pair
+  FROM siblings as a, size_of_dogs as b, size_of_dogs as c
+  WHERE (a.big = b.name AND a.small = c.name AND b.size = c.size) ;
 
 -- Ways to stack 4 dogs to a height of at least 170, ordered by total height
 CREATE TABLE stacks_helper(dogs, stack_height, last_height);
 
 -- Add your INSERT INTOs here
+INSERT INTO stacks_helper
+  SELECT name, height, height
+  FROM dogs;
 
+INSERT INTO stacks_helper
+  SELECT s.dogs || ", " || d.name, s.stack_height + d.height, d.height
+  FROM stacks_helper as s, dogs as d 
+  WHERE d.height > s.last_height;
+
+INSERT INTO stacks_helper
+  SELECT s.dogs || ", " || d.name, s.stack_height + d.height, d.height
+  FROM stacks_helper as s, dogs as d 
+  WHERE d.height > s.last_height;
+
+INSERT INTO stacks_helper
+  SELECT s.dogs || ", " || d.name, s.stack_height + d.height, d.height
+  FROM stacks_helper as s, dogs as d 
+  WHERE d.height > s.last_height;
 
 CREATE TABLE stacks AS
-  SELECT "REPLACE THIS LINE WITH YOUR SOLUTION";
+  SELECT dogs, stack_height
+  FROM stacks_helper
+  WHERE stack_height >= 170
+  ORDER BY stack_height;
