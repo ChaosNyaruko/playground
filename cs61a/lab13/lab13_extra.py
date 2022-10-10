@@ -40,3 +40,11 @@ def make_generators_generator(g):
     5
     """
     "*** YOUR CODE HERE ***"
+    def f(elem):
+      yield elem
+    elem = []
+    for sg in g():
+      elem.append(sg)
+      # print(sg)
+      yield from f(elem)
+
