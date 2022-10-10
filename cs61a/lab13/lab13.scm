@@ -1,10 +1,20 @@
 ; Q1
 (define (compose-all funcs)
-  'YOUR-CODE-HERE
-  nil
+  (define (dfs funcs x) 
+      (cond ((null? funcs) x)
+            (else (dfs (cdr funcs) ((car funcs) x)))
+        )
+    )
+  ; (define (inner x) (dfs funcs x))
+  (lambda (x) (dfs funcs x))
 )
 
 ; Q2
 (define (tail-replicate x n)
-  'YOUR-CODE-HERE
+  (define (dfs x n ret) 
+      (if (= n 0) ret
+            (dfs x (- n 1) (cons x ret))
+            )
+      )
+  (dfs x n nil)
 )

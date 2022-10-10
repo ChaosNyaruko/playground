@@ -20,3 +20,11 @@ def permutations(lst):
         yield []
         return
     "*** YOUR CODE HERE ***"
+    if len(lst) == 1:
+        yield lst[:]
+        return
+    v = lst[0]
+    for rest in permutations(lst[1:]):
+        # print("rest:", rest)
+        for i in range(len(rest) + 1):
+            yield list(rest[:i]) + [v] + list(rest[i:])
