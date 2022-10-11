@@ -1,5 +1,4 @@
-test:
-	g++ main.cpp -std=c++11 -o main
-	./main
 run:
-	python3 main.py
+	g++ 1790.cpp -std=c++17 --pedantic -o main
+	./main
+	rm ./main
