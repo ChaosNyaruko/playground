@@ -33,8 +33,8 @@ public:
     vector<int> g(26, 0);
     long long total = accumulate(g.begin(), g.end(), 0);
     for (int i = 0; i < n; i++) {
-      int g_next = (1 + total) % mod;
-      total = (total + (g_next - g[s[i] - 'a'])) % mod;
+      long long g_next = (1 + total) % mod;
+      total = (total + (mod + g_next - g[s[i] - 'a']) % mod) % mod;
       g[s[i] - 'a'] = g_next;
     }
 
@@ -52,7 +52,7 @@ int main() {
       "zchmliaqdgvwncfatcfivphddpzjkgyygueikthqzyeeiebczqbqhdytkoawkehkbizdmcni"
       "lcjjlpoeoqqoqpswtqdpvszfaksn",
       "knqmywztzgalovcyitifjmllyltjjnwbehsqaofidwzygekdylwmwxtsnhowpyuwkxomdqsl"
-      "dbcuseojgyimebpvqyzmvubgwhku"}; // expected 7 6 3 97915677
+      "dbcuseojgyimebpvqyzmvubgwhku"}; // expected 7 6 3 97915677 208740189
   for (auto s : inputs) {
     cout << sl.distinctSubseqII(s) << endl;
   }
