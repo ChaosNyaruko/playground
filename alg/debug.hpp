@@ -1,5 +1,11 @@
 #include "stdc++.h"
 
+inline void print(const std ::vector<int> &vec) {
+  for (auto &v : vec) {
+    printf("%d\n", v);
+  }
+}
+
 inline void print(std ::vector<int> &&vec) {
   for (auto &v : vec) {
     printf("%d\n", v);
