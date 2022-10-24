@@ -1,4 +1,4 @@
 run:
-	g++ 901.cpp -std=c++17 --pedantic -o main
+	g++ 915.cpp -std=c++17 --pedantic -o main
 	./main
 	rm ./main
