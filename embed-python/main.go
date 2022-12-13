@@ -3,6 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
+	"os"
+	"os/exec"
 
 	// This initializes gpython for runtime execution and is essential.
 	// It defines forward-declared symbols and registers native built-in modules, such as sys and time.
@@ -16,7 +19,39 @@ import (
 
 func main() {
 	flag.Parse()
-	runWithFile(flag.Arg(0))
+	if err := envPython3("testdata/date_time.py"); err != nil {
+		log.Println("envPython3 err", err)
+		os.Exit(2)
+	}
+	// runWithFile(flag.Arg(0))
+	// if err := runWithSrc(src); err != nil {
+	// 	log.Println(err)
+	// }
+}
+
+var src = `
+a = "abc"; print(a)
+print("hh")
+print("hh")
+print("hh")
+print("hh")
+`
+
+func envPython3(file string) error {
+	python3 := exec.Command("python3", file)
+	python3.Stdout = os.Stdout
+	python3.Stderr = os.Stderr
+	return python3.Run()
+}
+
+func runWithSrc(src string) error {
+	// See type Context interface and related docs
+	ctx := py.NewContext(py.DefaultContextOpts())
+	defer ctx.Close()
+
+	var err error
+	_, err = py.RunSrc(ctx, src, "a simple source", nil)
+	return err
 }
 
 func runWithFile(pyFile string) error {
