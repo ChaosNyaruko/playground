@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"log"
@@ -39,9 +40,25 @@ print("hh")
 
 func envPython3(file string) error {
 	python3 := exec.Command("python3", file)
-	python3.Stdout = os.Stdout
-	python3.Stderr = os.Stderr
-	return python3.Run()
+	stdout, err := python3.StdoutPipe()
+	if err != nil {
+		return err
+	}
+
+	r := bufio.NewReader(stdout)
+	if err := python3.Start(); err != nil {
+		return err
+	}
+	if s, err := r.ReadString('\n'); err != nil {
+		return err
+	} else {
+		fmt.Printf("%q", s)
+	}
+	if err := python3.Wait(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func runWithSrc(src string) error {
@@ -57,7 +74,10 @@ func runWithSrc(src string) error {
 func runWithFile(pyFile string) error {
 
 	// See type Context interface and related docs
-	ctx := py.NewContext(py.DefaultContextOpts())
+	opts := py.DefaultContextOpts()
+	opts.SysPaths = append(opts.SysPaths, "/opt/homebrew/Cellar/python@3.10/3.10.8/Frameworks/Python.framework/Versions/3.10/lib/python3.10")
+	fmt.Println(opts)
+	ctx := py.NewContext(opts)
 
 	// This drives modules being able to perform cleanup and release resources
 	defer ctx.Close()
