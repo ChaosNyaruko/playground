@@ -34,6 +34,7 @@ func main() {
 			f(c)
 		}
 	}
+	// log.Printf("result: %v", readText(doc))
 	f(doc)
 }
 
@@ -53,7 +54,7 @@ func dictionary(n *html.Node) {
 						if readElement(c, "span", "PronCodes") {
 							for c := c.FirstChild; c != nil; c = c.NextSibling {
 								if readElement(c, "span", "PRON") {
-									fmt.Printf("result: PRON [%s]\n", readPRON(c))
+									fmt.Printf("result: PRON [%s]\n", readText(c))
 								}
 							}
 						}
@@ -63,7 +64,7 @@ func dictionary(n *html.Node) {
 				if readElement(c, "span", "Sense") {
 					for c := c.FirstChild; c != nil; c = c.NextSibling {
 						if readElement(c, "span", "DEF") {
-							fmt.Printf("result: DEF [%s]\n", readDEF(c))
+							fmt.Printf("result: DEF [%s]\n", readText(c))
 						}
 					}
 				}
@@ -93,21 +94,4 @@ func readText(n *html.Node) string {
 		s += readText(c)
 	}
 	return s
-}
-
-func readPRON(n *html.Node) string {
-	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		if s := readText(c); s != "" {
-			return s
-		}
-	}
-	return ""
-}
-
-func readDEF(n *html.Node) string {
-	var res string
-	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		res += readText(c)
-	}
-	return res
 }
