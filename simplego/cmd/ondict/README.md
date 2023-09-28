@@ -11,4 +11,5 @@
 - [ ] colors(go get github.com/fatih/color go get github.com/mattn/go-colorable)
 - [ ] format and indent
 - [ ] integrated with vim
+- [ ] a simple TUI using https://github.com/charmbracelet/bubbletea ?
 - [ ] more information such as collocations/corpus/...

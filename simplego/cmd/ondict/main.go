@@ -1,31 +1,34 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
-	"net/http"
+	"os"
 	"strings"
-	"time"
 
 	"golang.org/x/net/html"
 )
 
+var word = flag.String("q", "", "specify the word that you want to query")
+var easyMode = flag.Bool("m", false, "true to show only 'frequent' meaning")
+
 func main() {
-	// s := `<p>Links:</p><ul><li><a href="foo">Foo</a><li><a href="/bar/baz">BarBaz</a></ul>`
-	// doc, err := html.Parse(strings.NewReader(s))
-	// fd, err := os.Open("./doctor_ldoce.html")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// defer fd.Close()
-	start := time.Now()
-	resp, err := http.Get("https://ldoceonline.com/dictionary/doctor")
-	log.Printf("query cost: %v", time.Since(start))
+	flag.Parse()
+	fd, err := os.Open("./doctor_ldoce.html")
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer resp.Body.Close()
-	doc, err := html.ParseWithOptions(resp.Body, html.ParseOptionEnableScripting(false))
+	defer fd.Close()
+	// start := time.Now()
+	// url := fmt.Sprintf("https://ldoceonline.com/dictionary/%s", *word)
+	// resp, err := http.Get(url)
+	// log.Printf("query cost: %v", time.Since(start))
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// defer resp.Body.Close()
+	doc, err := html.ParseWithOptions(fd, html.ParseOptionEnableScripting(false))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -36,44 +39,69 @@ func main() {
 	// Attr      []Attribute
 	var f func(*html.Node)
 	f = func(n *html.Node) {
-		log.Printf("Type: [%#v], DataAtom: [%s], Data: [%#v], Namespace: [%#v], Attr: [%#v]", n.Type, n.DataAtom, n.Data, n.Namespace, n.Attr)
+		// log.Printf("Type: [%#v], DataAtom: [%s], Data: [%#v], Namespace: [%#v], Attr: [%#v]", n.Type, n.DataAtom, n.Data, n.Namespace, n.Attr)
 		// if isElement(n, "div", "dictionary") {
 		ldoceDict(n)
+		// return
 		// }
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			f(c)
-		}
+		// for c := n.FirstChild; c != nil; c = c.NextSibling {
+		// 	f(c)
+		// }
 	}
 	// log.Printf("result: %v", readText(doc))
 	f(doc)
 }
 
-func ldoceDict(n *html.Node) {
+func findFirstSubSpan(n *html.Node, class string) *html.Node {
+	log.Printf("find class: %q, Type: [%#v], DataAtom: [%s], Data: [%#v], Namespace: [%#v], Attr: [%#v]", class, n.Type, n.DataAtom, n.Data, n.Namespace, n.Attr)
+	if isElement(n, "span", class) {
+		return n
+	}
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		if isElement(c, "span", "ldoceEntry Entry") {
-			for c := c.FirstChild; c != nil; c = c.NextSibling {
-				// read "frequent head" for PRON
-				if isElement(c, "span", "frequent Head") {
-					// for c := c.FirstChild; c != nil; c = c.NextSibling {
-					// 	if readElement(c, "span", "PronCodes") {
-					// 		for c := c.FirstChild; c != nil; c = c.NextSibling {
-					// 			if readElement(c, "span", "PRON") {
-					// 				fmt.Printf("result: PRON [%s]\n", readText(c))
-					// 			}
-					// 		}
-					// 	}
-					// }
-					fmt.Printf("frequent HEAD %s\n", readText(c, 0))
-				}
-				// read Sense for DEF
-				if isElement(c, "span", "Sense") {
-					fmt.Printf("Sense(%v):%s\n", getSpanID(c), readText(c, 0))
-				}
-				if isElement(c, "span", "Head\n") {
-					fmt.Printf("\n\nHEAD %s", readText(c, 0))
-				}
+		if res := findFirstSubSpan(c, class); res != nil {
+			return res
+		}
+	}
+	return nil
+}
+
+func readLongmanEntry(n *html.Node) {
+	if isElement(n, "span", "ldoceEntry Entry") || isElement(n, "span", "bussdictEntry Entry") {
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			// read "frequent head" for PRON
+			if isElement(c, "span", "frequent Head") {
+				fmt.Printf("frequent HEAD %s\n", readText(c, 0))
+			}
+			// read Sense for DEF
+			if isElement(c, "span", "Sense") {
+				fmt.Printf("Sense(%v):%s\n", getSpanID(c), readText(c, 0))
+			}
+			if isElement(c, "span", "Head\n") {
+				fmt.Printf("\n\nHEAD %s", readText(c, 0))
+				panic("HEAD")
 			}
 		}
+	} else {
+		log.Fatal("readLongmanEntry should be called on a 'Entry' node")
+	}
+}
+
+func ldoceDict(n *html.Node) {
+	// log.Printf("Type: [%#v], DataAtom: [%s], Data: [%#v], Namespace: [%#v], Attr: [%#v]", n.Type, n.DataAtom, n.Data, n.Namespace, n.Attr)
+	// if isElement(n, "span", "dictionary_intro span") {
+	// 	dictName := readText(n, 0)
+	// 	fmt.Printf("dictionary_intro: %v\n", dictName)
+	// }
+	if entry := findFirstSubSpan(n, "ldoceEntry Entry"); entry != nil {
+		fmt.Printf("==find an ldoce entry==\n")
+		readLongmanEntry(entry)
+	}
+	// if entry := findFirstSubSpan(n, "bussdictEntry Entry"); entry != nil {
+	// 	log.Printf("find an buss entry")
+	// 	readLongmanEntry(entry)
+	// }
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		ldoceDict(c)
 	}
 }
 
