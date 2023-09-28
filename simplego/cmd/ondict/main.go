@@ -40,13 +40,13 @@ func main() {
 	var f func(*html.Node)
 	f = func(n *html.Node) {
 		// log.Printf("Type: [%#v], DataAtom: [%s], Data: [%#v], Namespace: [%#v], Attr: [%#v]", n.Type, n.DataAtom, n.Data, n.Namespace, n.Attr)
-		// if isElement(n, "div", "dictionary") {
-		ldoceDict(n)
-		// return
-		// }
-		// for c := n.FirstChild; c != nil; c = c.NextSibling {
-		// 	f(c)
-		// }
+		if isElement(n, "div", "dictionary") {
+			ldoceDict(n)
+			return
+		}
+		for c := n.FirstChild; c != nil; c = c.NextSibling {
+			f(c)
+		}
 	}
 	// log.Printf("result: %v", readText(doc))
 	f(doc)
@@ -92,14 +92,18 @@ func ldoceDict(n *html.Node) {
 	// 	dictName := readText(n, 0)
 	// 	fmt.Printf("dictionary_intro: %v\n", dictName)
 	// }
-	if entry := findFirstSubSpan(n, "ldoceEntry Entry"); entry != nil {
+	if isElement(n, "span", "ldoceEntry Entry") {
 		fmt.Printf("==find an ldoce entry==\n")
-		readLongmanEntry(entry)
+		readLongmanEntry(n)
+		return
 	}
-	// if entry := findFirstSubSpan(n, "bussdictEntry Entry"); entry != nil {
-	// 	log.Printf("find an buss entry")
-	// 	readLongmanEntry(entry)
-	// }
+
+	if isElement(n, "span", "bussdictEntry Entry") {
+		fmt.Printf("==find an bussdict entry==\n")
+		readLongmanEntry(n)
+		return
+	}
+
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
 		ldoceDict(c)
 	}
