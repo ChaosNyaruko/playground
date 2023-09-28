@@ -1,4 +1,4 @@
-module github.com/ChaosNyaruo/playground/simplego
+module github.com/ChaosNyaruko/playground/simplego
 
 go 1.17
 

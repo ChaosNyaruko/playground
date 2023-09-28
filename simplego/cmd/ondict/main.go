@@ -3,8 +3,9 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
+	"net/http"
 	"strings"
+	"time"
 
 	"golang.org/x/net/html"
 )
@@ -12,12 +13,19 @@ import (
 func main() {
 	// s := `<p>Links:</p><ul><li><a href="foo">Foo</a><li><a href="/bar/baz">BarBaz</a></ul>`
 	// doc, err := html.Parse(strings.NewReader(s))
-	fd, err := os.Open("./doctor_ldoce.html")
+	// fd, err := os.Open("./doctor_ldoce.html")
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	// defer fd.Close()
+	start := time.Now()
+	resp, err := http.Get("https://ldoceonline.com/dictionary/doctor")
+	log.Printf("query cost: %v", time.Since(start))
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer fd.Close()
-	doc, err := html.ParseWithOptions(fd, html.ParseOptionEnableScripting(false))
+	defer resp.Body.Close()
+	doc, err := html.ParseWithOptions(resp.Body, html.ParseOptionEnableScripting(false))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -30,7 +38,7 @@ func main() {
 	f = func(n *html.Node) {
 		log.Printf("Type: [%#v], DataAtom: [%s], Data: [%#v], Namespace: [%#v], Attr: [%#v]", n.Type, n.DataAtom, n.Data, n.Namespace, n.Attr)
 		// if isElement(n, "div", "dictionary") {
-		dictionary(n)
+		ldoceDict(n)
 		// }
 		for c := n.FirstChild; c != nil; c = c.NextSibling {
 			f(c)
@@ -40,7 +48,7 @@ func main() {
 	f(doc)
 }
 
-func dictionary(n *html.Node) {
+func ldoceDict(n *html.Node) {
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
 		if isElement(c, "span", "ldoceEntry Entry") {
 			for c := c.FirstChild; c != nil; c = c.NextSibling {
