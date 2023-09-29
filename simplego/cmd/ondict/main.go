@@ -3,32 +3,44 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"log"
+	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"golang.org/x/net/html"
 )
 
 var word = flag.String("q", "", "specify the word that you want to query")
-var easyMode = flag.Bool("m", false, "true to show only 'frequent' meaning")
+var easyMode = flag.Bool("e", false, "true to show only 'frequent' meaning")
+var dev = flag.Bool("d", false, "if specified, a static html file will be parsed, instead of an online query")
 
 func main() {
+	var info io.Reader
 	flag.Parse()
-	fd, err := os.Open("./doctor_ldoce.html")
-	if err != nil {
-		log.Fatal(err)
+	if !*dev {
+		log.SetOutput(io.Discard)
+		start := time.Now()
+		url := fmt.Sprintf("https://ldoceonline.com/dictionary/%s", *word)
+		resp, err := http.Get(url)
+		log.Printf("query %v cost: %v", url, time.Since(start))
+		if err != nil {
+			log.Fatal(err)
+		}
+		info = resp.Body
+		defer resp.Body.Close()
+	} else {
+		fd, err := os.Open("./doctor_ldoce.html")
+		if err != nil {
+			log.Fatal(err)
+		}
+		info = fd
+		defer fd.Close()
 	}
-	defer fd.Close()
-	// start := time.Now()
-	// url := fmt.Sprintf("https://ldoceonline.com/dictionary/%s", *word)
-	// resp, err := http.Get(url)
-	// log.Printf("query cost: %v", time.Since(start))
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// defer resp.Body.Close()
-	doc, err := html.ParseWithOptions(fd, html.ParseOptionEnableScripting(false))
+
+	doc, err := html.ParseWithOptions(info, html.ParseOptionEnableScripting(false))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -66,27 +78,26 @@ func findFirstSubSpan(n *html.Node, class string) *html.Node {
 }
 
 func readLongmanEntry(n *html.Node) {
-	if isElement(n, "span", "ldoceEntry Entry") || isElement(n, "span", "bussdictEntry Entry") {
-		for c := n.FirstChild; c != nil; c = c.NextSibling {
-			// read "frequent head" for PRON
-			if isElement(c, "span", "frequent Head") {
-				fmt.Printf("frequent HEAD %s\n", readText(c, 0))
-			}
-			// read Sense for DEF
-			if isElement(c, "span", "Sense") {
-				fmt.Printf("Sense(%v):%s\n", getSpanID(c), readText(c, 0))
-			}
-			if isElement(c, "span", "Head\n") {
-				fmt.Printf("\n\nHEAD %s", readText(c, 0))
-				panic("HEAD")
-			}
-		}
-	} else {
-		log.Fatal("readLongmanEntry should be called on a 'Entry' node")
+	// read "frequent head" for PRON
+	if isElement(n, "span", "frequent Head") {
+		fmt.Printf("frequent HEAD %s\n", readText(n, 0))
+		return
+	}
+	// read Sense for DEF
+	if isElement(n, "span", "Sense") {
+		fmt.Printf("Sense(%v):%s\n", getSpanID(n), readText(n, 0))
+		return
+	}
+	if isElement(n, "span", "Head") {
+		fmt.Printf("\nHEAD %s\n", readText(n, 0))
+		return
+	}
+	for c := n.FirstChild; c != nil; c = c.NextSibling {
+		readLongmanEntry(c)
 	}
 }
 
-func ldoceDict(n *html.Node) {
+func ldoceDict(n *html.Node) bool {
 	// log.Printf("Type: [%#v], DataAtom: [%s], Data: [%#v], Namespace: [%#v], Attr: [%#v]", n.Type, n.DataAtom, n.Data, n.Namespace, n.Attr)
 	// if isElement(n, "span", "dictionary_intro span") {
 	// 	dictName := readText(n, 0)
@@ -95,18 +106,20 @@ func ldoceDict(n *html.Node) {
 	if isElement(n, "span", "ldoceEntry Entry") {
 		fmt.Printf("==find an ldoce entry==\n")
 		readLongmanEntry(n)
-		return
+		return true
 	}
 
 	if isElement(n, "span", "bussdictEntry Entry") {
 		fmt.Printf("==find an bussdict entry==\n")
 		readLongmanEntry(n)
-		return
+		return true
 	}
 
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
 		ldoceDict(c)
 	}
+
+	return false
 }
 
 func isElement(n *html.Node, ele string, class string) bool {
