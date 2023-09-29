@@ -20,6 +20,11 @@ var dev = flag.Bool("d", false, "if specified, a static html file will be parsed
 func main() {
 	var info io.Reader
 	flag.Parse()
+	fmt.Println(flag.Args())
+	if len(flag.Args()) > 0 {
+		flag.PrintDefaults()
+		return
+	}
 	if !*dev {
 		log.SetOutput(io.Discard)
 		start := time.Now()
