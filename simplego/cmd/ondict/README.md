@@ -10,6 +10,7 @@
 - [ ] this README document
 - [x] parsing
 - [x] do HTTP req instead of parsing a static html file
+- [ ] hyphen-connected for phrases
 - [ ] cache and save/restore stuff, in pure text, for reviewing, i.e. simple ANKI?
 - [ ] integrated with vim
 - [ ] more information such as collocations/corpus/...
