@@ -1,6 +1,5 @@
 #include "debug.hpp"
 using namespace std;
-// TODO: 1997. 访问完所有房间的第一天
 /*
 你需要访问 n 个房间，房间从 0 到 n - 1 编号。同时，每一天都有一个日期编号，从 0
 开始，依天数递增。你每天都会访问一个房间。
@@ -58,21 +57,30 @@ i 号房间的次数为 偶数 ，那么 第二天 需要访问 (i + 1) mod n �
 class Solution {
 public:
   int firstDayBeenInAllRooms(vector<int> &nextVisit) {
+    const int MOD = 1e9 + 7;
     int n = nextVisit.size();
-    vector<int> s(n+1, 0);
-    constexpr int MOD = 1e9 + 7;
-    /* s[1] = 0; */
-    for (int i = 0; i < n; i++) {
-      int f = s[i] - s[nextVisit[i]] + 2;
-      /* printf("f[%d]=%d\n", i, f); */
-      s[i + 1] += s[i] + f;
+    vector<int> s(n);
+    for (int i = 0; i < n - 1; i++) {
+      int j = nextVisit[i];
+      s[i+1] = (s[i] * 2 - s[j] + 2 + MOD) % MOD;
     }
-    /* print(s); */
-    vector<int> dp(n, 0);
-    for (int i = 1; i < n; i++) {
-      dp[i] = (dp[i - 1] + s[i] - s[nextVisit[i]]) % MOD;
-    }
-    return dp[n - 1];
+    return s[n-1];
+    // --- my wrong answer
+    /* int n = nextVisit.size(); */
+    /* vector<int> s(n+1, 0); */
+    /* constexpr int MOD = 1e9 + 7; */
+    /* /1* s[1] = 0; *1/ */
+    /* for (int i = 0; i < n; i++) { */
+    /*   int f = s[i] - s[nextVisit[i]] + 2; */
+    /*   /1* printf("f[%d]=%d\n", i, f); *1/ */
+    /*   s[i + 1] += s[i] + f; */
+    /* } */
+    /* /1* print(s); *1/ */
+    /* vector<int> dp(n, 0); */
+    /* for (int i = 1; i < n; i++) { */
+    /*   dp[i] = (dp[i - 1] + s[i] - s[nextVisit[i]]) % MOD; */
+    /* } */
+    /* return dp[n - 1]; */
   }
 };
 
