@@ -57,3 +57,32 @@ void print(TreeNode* node) {
   print(node->right);
   return;
 }
+
+
+/* struct key_hash : public std::unary_function<key_t, std::size_t> */
+/* { */
+/*    std::size_t operator()(const key_t& k) const */
+/*    { */
+/*       return std::get<0>(k)[0] ^ std::get<1>(k) ^ std::get<2>(k); */
+/*    } */
+/* }; */
+
+/* struct key_equal : public std::binary_function<key_t, key_t, bool> */
+/* { */
+/*    bool operator()(const key_t& v0, const key_t& v1) const */
+/*    { */
+/*       return ( */
+/*                std::get<0>(v0) == std::get<0>(v1) && */
+/*                std::get<1>(v0) == std::get<1>(v1) && */
+/*                std::get<2>(v0) == std::get<2>(v1) */
+/*              ); */
+/*    } */
+/* }; */
+
+/* struct data */
+/* { */
+/*    std::string x; */
+/* }; */
+
+/* typedef std::unordered_map<key_t,data,key_hash,key_equal> map_t; */
+
