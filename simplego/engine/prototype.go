@@ -166,7 +166,7 @@ type contentWithParams struct {
 
 func ParseP(content string, name string) { //(*RawPipeline, error) {
 	// Compile the regular expression
-	re, err := regexp.Compile(`^((\w+)\((?:([\w\d]+)=([^,)]+))?,?(?:([\w\d]+)=([^,)]+))?\))(?:\+(\w+)\((?:([\w\d]+)=([^,)]+))?,?(?:([\w\d]+)=([^,)]+))?\))*$`)
+	re, err := regexp.Compile(`(\w+)\(((?:\s*\w+\s*=\s*[^,)]+\s*,?)*)\)`)
 	if err != nil {
 		fmt.Println("Error compiling regex:", err)
 		return
@@ -199,63 +199,36 @@ func ParseP(content string, name string) { //(*RawPipeline, error) {
 		Parameters   []Parameter
 	}
 
-	// for _, content := range expressions {
-	// 	fmt.Println("content", content)
-	// 	if matches := re.FindAllStringSubmatch(content, -1); matches != nil {
-	// 		var expr Expression
-	// 		for _, match := range matches {
-	// 			// fmt.Printf("match %d for %s: [%v]\n", i, content, match)
-	// 			if match[2] != "" {
-	// 				expr.FunctionName = match[2]
-	// 			}
-	// 			if match[3] != "" && match[4] != "" {
-	// 				expr.Parameters = append(expr.Parameters, Parameter{
-	// 					Name:  match[3],
-	// 					Value: match[4],
-	// 				})
-	// 			}
-	// 			if match[5] != "" && match[6] != "" {
-	// 				expr.Parameters = append(expr.Parameters, Parameter{
-	// 					Name:  match[5],
-	// 					Value: match[6],
-	// 				})
-	// 			}
-	// 		}
-	// 		fmt.Printf("Expression: %s\n", expr.FunctionName)
-	// 		for _, param := range expr.Parameters {
-	// 			fmt.Printf("  - %s = %s\n", param.Name, param.Value)
-	// 		}
-	// 		fmt.Println()
-	// 	} else {
-	// 		fmt.Printf("Expression '%s' does not match the regex\n", content)
-	// 	}
-	// }
-
 	for _, expr := range expressions {
 		var allExpressions []Expression
 		fmt.Println(expr, "------")
 		subExpressions := strings.Split(expr, "+")
 		for _, subExpr := range subExpressions {
 			if matches := re.FindAllStringSubmatch(subExpr, -1); matches != nil {
-				var e Expression
 				for _, match := range matches {
-					if match[2] != "" {
-						e.FunctionName = match[2]
+					var e Expression
+					e.FunctionName = match[1]
+
+					paramStr := match[2]
+					params := strings.Split(paramStr, ",")
+					for _, param := range params {
+						if param = strings.TrimSpace(param); param != "" {
+							parts := strings.Split(param, "=")
+							if len(parts) == 2 {
+								e.Parameters = append(e.Parameters, Parameter{
+									Name:  strings.TrimSpace(parts[0]),
+									Value: strings.TrimSpace(parts[1]),
+								})
+							}
+						}
 					}
-					if match[3] != "" && match[4] != "" {
-						e.Parameters = append(e.Parameters, Parameter{
-							Name:  match[3],
-							Value: match[4],
-						})
+
+					fmt.Printf("Expression: %s\n", e.FunctionName)
+					for _, param := range e.Parameters {
+						fmt.Printf("  - %s = %s\n", param.Name, param.Value)
 					}
-					if match[5] != "" && match[6] != "" {
-						e.Parameters = append(e.Parameters, Parameter{
-							Name:  match[5],
-							Value: match[6],
-						})
-					}
+					fmt.Println()
 				}
-				allExpressions = append(allExpressions, e)
 			} else {
 				fmt.Printf("Expression '%s' does not match the regex\n", subExpr)
 			}
