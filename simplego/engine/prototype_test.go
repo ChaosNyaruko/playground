@@ -161,5 +161,12 @@ func TestRuntimeGroupID(t *testing.T) {
 	assert.Equal(t, 2003, id)
 	assert.Equal(t, 1, reset)
 	assert.Equal(t, 300, code)
+}
 
+func TestParseP(t *testing.T) {
+	engine.ParseP("", "")
+}
+
+func TestX(t *testing.T) {
+	engine.X()
 }

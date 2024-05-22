@@ -7,6 +7,8 @@ import (
 	"go/token"
 	"log"
 	"reflect"
+	"regexp"
+	"strings"
 
 	"github.com/traefik/yaegi/interp"
 )
@@ -162,6 +164,112 @@ type contentWithParams struct {
 	wrapper interface{}
 }
 
+func ParseP(content string, name string) { //(*RawPipeline, error) {
+	// Compile the regular expression
+	re, err := regexp.Compile(`^((\w+)\((?:([\w\d]+)=([^,)]+))?,?(?:([\w\d]+)=([^,)]+))?\))(?:\+(\w+)\((?:([\w\d]+)=([^,)]+))?,?(?:([\w\d]+)=([^,)]+))?\))*$`)
+	if err != nil {
+		fmt.Println("Error compiling regex:", err)
+		return
+	}
+
+	// Test the expressions
+	expressions := []string{
+		"single()",
+		"lowscore(bound=10)",
+		"usersample(rate=0.1,enabled=true)",
+		"mutilple(a=1,b=2)+single()",
+		"lowscore(bound=10)+usersample(rate=0.1,enabled=true)+mutilple(a=1,b=2)+single()",
+		"lowscore(bound=10)+usersample(rate=0.1,enabled=true)+mutilple(a=1,b=2)+single()+testing(a=1,b=2,c=3,d=4)",
+	}
+
+	for _, expr := range expressions {
+		if re.MatchString(expr) {
+			fmt.Printf("Expression '%s' matches the regex\n", expr)
+		} else {
+			fmt.Printf("Expression '%s' does not match the regex\n", expr)
+		}
+	}
+
+	type Parameter struct {
+		Name  string
+		Value string
+	}
+	type Expression struct {
+		FunctionName string
+		Parameters   []Parameter
+	}
+
+	// for _, content := range expressions {
+	// 	fmt.Println("content", content)
+	// 	if matches := re.FindAllStringSubmatch(content, -1); matches != nil {
+	// 		var expr Expression
+	// 		for _, match := range matches {
+	// 			// fmt.Printf("match %d for %s: [%v]\n", i, content, match)
+	// 			if match[2] != "" {
+	// 				expr.FunctionName = match[2]
+	// 			}
+	// 			if match[3] != "" && match[4] != "" {
+	// 				expr.Parameters = append(expr.Parameters, Parameter{
+	// 					Name:  match[3],
+	// 					Value: match[4],
+	// 				})
+	// 			}
+	// 			if match[5] != "" && match[6] != "" {
+	// 				expr.Parameters = append(expr.Parameters, Parameter{
+	// 					Name:  match[5],
+	// 					Value: match[6],
+	// 				})
+	// 			}
+	// 		}
+	// 		fmt.Printf("Expression: %s\n", expr.FunctionName)
+	// 		for _, param := range expr.Parameters {
+	// 			fmt.Printf("  - %s = %s\n", param.Name, param.Value)
+	// 		}
+	// 		fmt.Println()
+	// 	} else {
+	// 		fmt.Printf("Expression '%s' does not match the regex\n", content)
+	// 	}
+	// }
+
+	for _, expr := range expressions {
+		var allExpressions []Expression
+		fmt.Println(expr, "------")
+		subExpressions := strings.Split(expr, "+")
+		for _, subExpr := range subExpressions {
+			if matches := re.FindAllStringSubmatch(subExpr, -1); matches != nil {
+				var e Expression
+				for _, match := range matches {
+					if match[2] != "" {
+						e.FunctionName = match[2]
+					}
+					if match[3] != "" && match[4] != "" {
+						e.Parameters = append(e.Parameters, Parameter{
+							Name:  match[3],
+							Value: match[4],
+						})
+					}
+					if match[5] != "" && match[6] != "" {
+						e.Parameters = append(e.Parameters, Parameter{
+							Name:  match[5],
+							Value: match[6],
+						})
+					}
+				}
+				allExpressions = append(allExpressions, e)
+			} else {
+				fmt.Printf("Expression '%s' does not match the regex\n", subExpr)
+			}
+		}
+
+		for _, e := range allExpressions {
+			fmt.Printf("Expression: %s\n", e.FunctionName)
+			for _, param := range e.Parameters {
+				fmt.Printf("  - %s = %s\n", param.Name, param.Value)
+			}
+			fmt.Println()
+		}
+	}
+}
 func ParsePipeline(content string, name string) (*RawPipeline, error) {
 	// TODO: just a mock, need a real parser here, maybe a manual one rather than regex is easier
 	if content == "1(bound=50)+2" {
@@ -172,6 +280,10 @@ func ParsePipeline(content string, name string) (*RawPipeline, error) {
 	return &RawPipeline{
 		content: []contentWithParams{{"WrappedC2", c2, []any{}, wrapperC2Stub}, {"WrappedC1", c1, []any{50}, wrapperC1Stub}},
 	}, nil
+	// ^(\w+)\((?:([\w\d]+)=(\d+(?:\.\d+)?))?,?(?:([\w\d]+)=(\d+(?:\.\d+)?))?\)$
+	// ^(\w+)\((?:([\w\d]+)=([^,)]+))?,?(?:([\w\d]+)=([^,)]+))?\)$
+	// ^((\w+)\((?:([\w\d]+)=([^,)]+))?,?(?:([\w\d]+)=([^,)]+))?\))(?:\+(\w+)\((?:([\w\d]+)=([^,)]+))?,?(?:([\w\d]+)=([^,)]+))?\))*$
+
 }
 
 var ComponentForHookMap map[string]any = map[string]any{"ComponentForHook1": ComponentForHook1(nil)}
@@ -300,4 +412,63 @@ func GetRuntimeGroupID(s *StreamInfo, c *ClientInfo) (int, int, int) {
 func Init() error {
 	H.Init()
 	return ParseAll()
+}
+
+func X() {
+	type Parameter struct {
+		Name  string
+		Value string
+	}
+	type Expression struct {
+		FunctionName string
+		Parameters   []Parameter
+	}
+
+	// Compile the regular expression
+	re, err := regexp.Compile(`(\w+)\((?:([\w\d]+)=([^,)]+))?(?:,\s*(?:([\w\d]+)=([^,)]+))?(?:,\s*(?:([\w\d]+)=([^,)]+))?)?)?\)`)
+	if err != nil {
+		fmt.Println("Error compiling regex:", err)
+		return
+	}
+
+	// Test the expressions
+	expressions := []string{
+		"lowscore(bound=10)+usersample(rate=0.1,enabled=true)+mutilple(a=1,b=2)+single()+testing(c=1,d=2)",
+		"lowscore(bound=10)+usersample(rate=0.1,enabled=true)+mutilple(a=1,b=2)+single()",
+		"lowscore(bound=10)",
+		"usersample(rate=0.1,enabled=true)",
+		"mutilple(a=1,b=2)+single()",
+	}
+
+	for _, expr := range expressions {
+		fmt.Printf("==%v==\n", expr)
+		if matches := re.FindAllStringSubmatch(expr, -1); matches != nil {
+			for i, match := range matches {
+				fmt.Printf("==%v== %dth match: %v\n", expr, i, match)
+				var e Expression
+				if match[1] != "" {
+					e.FunctionName = match[1]
+				}
+				if match[2] != "" && match[3] != "" {
+					e.Parameters = append(e.Parameters, Parameter{
+						Name:  match[2],
+						Value: match[3],
+					})
+				}
+				if match[4] != "" && match[5] != "" {
+					e.Parameters = append(e.Parameters, Parameter{
+						Name:  match[4],
+						Value: match[5],
+					})
+				}
+				fmt.Printf("Expression: %s\n", e.FunctionName)
+				for _, param := range e.Parameters {
+					fmt.Printf("  - %s = %s\n", param.Name, param.Value)
+				}
+				fmt.Println()
+			}
+		} else {
+			fmt.Printf("Expression '%s' does not match the regex\n", expr)
+		}
+	}
 }
