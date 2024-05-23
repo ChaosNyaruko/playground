@@ -13,6 +13,24 @@ import (
 	"github.com/traefik/yaegi/interp"
 )
 
+var cany = `
+	import (
+		. "fake.com/engine/proto"
+	)
+
+	func WrappedAny(bound interface{}) func(*StreamInfo, *ClientInfo) (int, int, int, int) {
+		x := bound.(int)
+		return func(s *StreamInfo, c *ClientInfo) (id, reset, code, quit int) {
+			if s.Concurrent > x {
+				return 2003, 1, 233, 1
+			}
+			if c.Platform == 4 {
+				return 2002, 0, 234, 1
+			}
+			return 2002, 0, 235, 0
+		}
+	}
+	`
 var c1 = `
 	import (
 		. "fake.com/engine/proto"
@@ -72,11 +90,12 @@ func CheckContent(content string) (*ast.File, error) {
 	return ast, err
 }
 
-func updateFunc[T any](f *T, i *interp.Interpreter, name string) {
+func updateFunc[T any](f *T, i *interp.Interpreter, name string) error {
 	v, err := i.Eval(name)
 	if err == nil {
 		*f = v.Interface().(T)
 	}
+	return err
 }
 
 func ParseComponent[P any](wrapper any, sig P, content string, name string, args ...any) (P, error) {
@@ -101,7 +120,9 @@ func ParseComponent[P any](wrapper any, sig P, content string, name string, args
 	if _, err = i.Eval(content); err != nil {
 		return out, err
 	}
-	updateFunc(&res, i, name)
+	if err := updateFunc(&res, i, name); err != nil {
+		return out, err
+	}
 
 	// TODO: check correctness
 	in := []reflect.Value{}
@@ -132,7 +153,8 @@ func ParseAll() error {
 	bizs := []biz{
 		// {"normal", 0, 1128, 4, "1(bound=50)+2", "dispatcher_grouping"},
 		// {"normal", 0, 1128, 1, "2+1(bound=50)", "dispatcher_grouping"},
-		{"normal", 0, 1128, 4, "WrappedC1(bound=50)+WrappedC2()", "dispatcher_grouping"},
+		// {"normal", 0, 1128, 4, "WrappedC1(bound=50)+WrappedC2()", "dispatcher_grouping"},
+		{"normal", 0, 1128, 4, "WrappedAny(bound=50)+WrappedC2()", "dispatcher_grouping"},
 		{"normal", 0, 1128, 1, "WrappedC2()+WrappedC1(bound=50)", "dispatcher_grouping"},
 		// {"normal", 0, 1128, 4, "WrappedC1(bound=50)+WrappedC2", "dispatcher_grouping"},
 		// {"normal", 0, 1128, 1, "WrappedC2+WrappedC1(bound=50)", "dispatcher_grouping"},
@@ -144,7 +166,10 @@ func ParseAll() error {
 		}
 		cs := []ComponentForHook1{}
 		for _, rc := range p.content {
-			c, _ := ParseComponent(rc.wrapper, hook1Stub, rc.content, rc.name, rc.params...)
+			c, err := ParseComponent(rc.wrapper, hook1Stub, rc.content, rc.name, rc.params...)
+			if err != nil {
+				panic(err)
+			}
 			cs = append(cs, c)
 		}
 		compiled := Compose(cs)
@@ -224,16 +249,18 @@ func ParseP(content string, name string) (*RawPipeline, error) {
 				// e.g. WrappedC4: -> "int,string,float64,bool"
 				// this prototype are just mocking.
 				types := map[string][]string{
-					"WrappedC1": []string{"int"},
-					"WrappedC2": []string{},
-					"WrappedC3": []string{"string"},
-					"WrappedC4": []string{"int", "string", "float64", "bool"},
+					"WrappedC1":  []string{"int"},
+					"WrappedC2":  []string{},
+					"WrappedC3":  []string{"string"},
+					"WrappedC4":  []string{"int", "string", "float64", "bool"},
+					"WrappedAny": []string{"any"},
 				}
 				contents := map[string]string{
-					"WrappedC1": c1,
-					"WrappedC2": c2,
-					"WrappedC3": "",
-					"WrappedC4": "",
+					"WrappedC1":  c1,
+					"WrappedC2":  c2,
+					"WrappedC3":  "",
+					"WrappedC4":  "",
+					"WrappedAny": cany,
 				}
 				stubKey := fmt.Sprintf("<%s>", strings.Join(types[e.FunctionName], ","))
 				stub := wrapperMap[stubKey]
@@ -256,10 +283,10 @@ func ParseP(content string, name string) (*RawPipeline, error) {
 					fmt.Printf("  - %s = %s\n", param.Name, param.Value)
 					t := types[e.FunctionName][i]
 					tmp, err := interpreter.Eval(param.Value)
-					if err != nil || tmp.Type().String() != types[e.FunctionName][i] {
-						return nil, ErrWrongParameterType.WithArgs(i, param.Name, t, param.Value)
+					fmt.Printf("-----=====%v:%v:%v\n", tmp, tmp.Interface(), tmp.Type())
+					if err != nil || (types[e.FunctionName][i] != "any" && tmp.Type().String() != types[e.FunctionName][i]) {
+						return nil, ErrWrongParameterType.WithArgs(i, param.Name, t, param.Value, tmp.Type().String())
 					}
-					// fmt.Printf("-----=====%v:%v:%v\n", tmp, tmp.Interface(), tmp.Type())
 					ele.params = append(ele.params, tmp.Interface())
 				}
 				fmt.Println()
@@ -290,6 +317,7 @@ func ParseP(content string, name string) (*RawPipeline, error) {
 var wrapperMap = map[string]any{
 	"<int>": wrapperC1Stub,
 	"<>":    wrapperC2Stub,
+	"<any>": wrapperAnyStub,
 }
 
 func ParsePipeline(content string, name string) (*RawPipeline, error) {
@@ -411,6 +439,12 @@ var wrapperC1Stub = func(int) ComponentForHook1 {
 		return 0, 0, 0, 0
 	}
 }
+
+var wrapperAnyStub = func(any) ComponentForHook1 {
+	return func(s *StreamInfo, c *ClientInfo) (int, int, int, int) {
+		return 0, 0, 0, 0
+	}
+}
 var wrapperC2Stub = func() ComponentForHook1 {
 	return func(s *StreamInfo, c *ClientInfo) (int, int, int, int) {
 		return 0, 0, 0, 0
@@ -514,4 +548,4 @@ func (e *MyError) WithArgs(a ...interface{}) *MyError {
 	return &e2
 }
 
-var ErrWrongParameterType = &MyError{"WrongParameterType", "arg %d[%s] expect a(n) %v type, but got a(n) %v"}
+var ErrWrongParameterType = &MyError{"WrongParameterType", "arg %d[%s] expect a(n) %v type, but got a(n) %v, which is considered as %s"}
