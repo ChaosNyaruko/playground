@@ -223,12 +223,11 @@ func ParseP(content string, name string) (*RawPipeline, error) {
 				// e.g. WrappedC3: -> "string"
 				// e.g. WrappedC4: -> "int,string,float64,bool"
 				// this prototype are just mocking.
-				// TODO: we also need a validation.
-				types := map[string]string{
-					"WrappedC1": "int",
-					"WrappedC2": "",
-					"WrappedC3": "string",
-					"WrappedC4": "int,string,float64,bool",
+				types := map[string][]string{
+					"WrappedC1": []string{"int"},
+					"WrappedC2": []string{},
+					"WrappedC3": []string{"string"},
+					"WrappedC4": []string{"int", "string", "float64", "bool"},
 				}
 				contents := map[string]string{
 					"WrappedC1": c1,
@@ -236,9 +235,10 @@ func ParseP(content string, name string) (*RawPipeline, error) {
 					"WrappedC3": "",
 					"WrappedC4": "",
 				}
-				stub := wrapperMap[fmt.Sprintf("<%s>", types[e.FunctionName])]
+				stubKey := fmt.Sprintf("<%s>", strings.Join(types[e.FunctionName], ","))
+				stub := wrapperMap[stubKey]
 				if stub == nil {
-					fmt.Printf("nil stub for %q, please check!", e.FunctionName)
+					fmt.Printf("nil stub for %q, please check!\n", e.FunctionName)
 				}
 				ele := contentWithParams{
 					name:    e.FunctionName,
@@ -247,13 +247,24 @@ func ParseP(content string, name string) (*RawPipeline, error) {
 					wrapper: stub,
 				}
 
-				for _, param := range e.Parameters {
+				// TODO: we need a better validation system
+				if len(types[e.FunctionName]) != len(e.Parameters) {
+					return nil, fmt.Errorf("stubkey: %s, parameter number wrong for %v, registered: %d, but passed in %d",
+						stubKey, e.FunctionName, len(types[e.FunctionName]), len(e.Parameters))
+				}
+				for i, param := range e.Parameters {
 					fmt.Printf("  - %s = %s\n", param.Name, param.Value)
-					if v, err := strconv.Atoi(param.Value); err != nil {
-						// TODO: more types
+					t := types[e.FunctionName][i]
+					// TODO: more types
+					switch t {
+					case "int":
+						if v, err := strconv.Atoi(param.Value); err == nil {
+							ele.params = append(ele.params, v)
+						} else {
+							return nil, ErrWrongParameterType.WithArgs(i, param.Name, t, param.Value)
+						}
+					default:
 						ele.params = append(ele.params, param.Value)
-					} else {
-						ele.params = append(ele.params, v)
 					}
 				}
 				fmt.Println()
@@ -271,7 +282,13 @@ func ParseP(content string, name string) (*RawPipeline, error) {
 		}
 		fmt.Println()
 	}
-	fmt.Printf("res: %+v\n", res)
+	fmt.Printf("res: %+v, %v--\n", res, reflect.ValueOf(res))
+	for i, x := range res.content {
+		for j, y := range x.params {
+			fmt.Printf("param[%d-%d], %v, %v, %v\n", i, j, y, reflect.TypeOf(y).Name(), reflect.ValueOf(y))
+		}
+	}
+	fmt.Printf("--\n")
 	return res, nil
 }
 
@@ -482,3 +499,24 @@ func X() {
 		}
 	}
 }
+
+type MyError struct {
+	code string
+	msg  string
+}
+
+func (e *MyError) Error() string {
+	return e.msg
+}
+
+func (e *MyError) Code() string {
+	return e.code
+}
+
+func (e *MyError) WithArgs(a ...interface{}) *MyError {
+	e2 := *e
+	e2.msg = fmt.Sprintf(e.msg, a...)
+	return &e2
+}
+
+var ErrWrongParameterType = &MyError{"WrongParameterType", "arg %d[%s] expect a(n) %v type, but got a(n) %v"}
