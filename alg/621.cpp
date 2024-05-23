@@ -1,7 +1,7 @@
 #include "debug.hpp"
 #include <algorithm>
 using namespace std;
-// TODO: 任务调度器
+// 任务调度器
 /*
 给你一个用字符数组 tasks 表示的 CPU 需要执行的任务列表，用字母 A 到 Z
 表示，以及一个冷却时间
