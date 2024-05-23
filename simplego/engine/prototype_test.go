@@ -172,6 +172,8 @@ func TestParseP(t *testing.T) {
 	testcases := []testcase{
 		{"WrappedC1(bound=50)+WrappedC2()", nil},
 		{"WrappedC1(bound=\"bug\")+WrappedC2()", engine.ErrWrongParameterType.WithArgs(0, "bound", "int", `"bug"`)},
+		{"WrappedC1(bound=false)+WrappedC2()", engine.ErrWrongParameterType.WithArgs(0, "bound", "int", `false`)},
+		{"WrappedC1(bound=0.1)+WrappedC2()", engine.ErrWrongParameterType.WithArgs(0, "bound", "int", `0.1`)},
 		// "single()",
 		// "lowscore(bound=10)",
 		// "usersample(rate=0.1,enabled=true)",
