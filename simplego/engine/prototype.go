@@ -455,6 +455,10 @@ var hook1Stub = func(*StreamInfo, *ClientInfo) (int, int, int, int) {
 	return 0, 0, 0, 0
 }
 
+var anyStub = func(any) (any, int) {
+	return 0, 0
+}
+
 var H *DispatcherHook1 = &DispatcherHook1{}
 
 func (h *DispatcherHook1) Init() {
