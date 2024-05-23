@@ -72,7 +72,7 @@ class Solution {
 public:
   int minSkips(const vector<int> &dist, int speed, int hoursBefore) {
     int a = accumulate(dist.begin(), dist.end(), 0);
-    if (speed * hoursBefore < a) {
+    if ((long long)speed * hoursBefore < a) {
       return -1;
     }
     int n = dist.size();
@@ -83,15 +83,16 @@ public:
       for (int j = 0; j <= i; j++) {
         // skip this time
         if (j >= 1)
-          dp[i][j] = min(dp[i][j], dp[i - 1][j - 1] + speed * dist[i - 1]);
+          dp[i][j] = min(dp[i][j], dp[i - 1][j - 1] + dist[i - 1]);
         // not skip
         if (j != i)
           dp[i][j] = min(
               dp[i][j], ((dp[i - 1][j] + dist[i - 1] - 1) / speed + 1) * speed);
+        /* printf("dp[%d][%d]=%lld\n", i, j, dp[i][j]); */
       }
     }
     for (int j = 0; j <= n; j++) {
-      if (dp[n][j] <= speed * hoursBefore) {
+      if (dp[n][j] <= (long long)speed * hoursBefore) {
         return j;
       }
     }
