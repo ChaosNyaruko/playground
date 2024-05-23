@@ -260,7 +260,7 @@ func ParseP(content string, name string) (*RawPipeline, error) {
 						return nil, ErrWrongParameterType.WithArgs(i, param.Name, t, param.Value)
 					}
 					// fmt.Printf("-----=====%v:%v:%v\n", tmp, tmp.Interface(), tmp.Type())
-					ele.params = append(ele.params, tmp)
+					ele.params = append(ele.params, tmp.Interface())
 				}
 				fmt.Println()
 				res.content = append(res.content, ele)
