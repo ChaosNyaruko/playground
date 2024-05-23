@@ -165,8 +165,13 @@ func TestRuntimeGroupID(t *testing.T) {
 
 func TestParseP(t *testing.T) {
 	// Test the expressions
-	expressions := []string{
-		"WrappedC1(bound=50)+WrappedC2()",
+	type testcase struct {
+		input  string
+		expect error
+	}
+	testcases := []testcase{
+		{"WrappedC1(bound=50)+WrappedC2()", nil},
+		{"WrappedC1(bound=\"bug\")+WrappedC2()", engine.ErrWrongParameterType.WithArgs(0, "bound", "int", `"bug"`)},
 		// "single()",
 		// "lowscore(bound=10)",
 		// "usersample(rate=0.1,enabled=true)",
@@ -174,8 +179,9 @@ func TestParseP(t *testing.T) {
 		// "lowscore(bound=10)+usersample(rate=0.1,enabled=true)+mutilple(a=1,b=2)+single()",
 		// "lowscore(bound=10)+usersample(rate=0.1,enabled=true)+mutilple(a=1,b=2)+single()+testing(a=1,b=2,c=3,d=4)",
 	}
-	for _, e := range expressions {
-		engine.ParseP(e, "")
+	for _, e := range testcases {
+		_, err := engine.ParseP(e.input, "")
+		assert.Equal(t, e.expect, err)
 	}
 }
 
