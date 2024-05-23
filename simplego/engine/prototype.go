@@ -8,7 +8,6 @@ import (
 	"log"
 	"reflect"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/traefik/yaegi/interp"
@@ -196,6 +195,7 @@ func ParseP(content string, name string) (*RawPipeline, error) {
 	var allExpressions []Expression
 	fmt.Println(content, "------")
 	subExpressions := strings.Split(content, "+")
+	interpreter := interp.New(interp.Options{})
 	for _, subExpr := range subExpressions {
 		if matches := re.FindAllStringSubmatch(subExpr, -1); matches != nil {
 			for _, match := range matches {
@@ -255,17 +255,12 @@ func ParseP(content string, name string) (*RawPipeline, error) {
 				for i, param := range e.Parameters {
 					fmt.Printf("  - %s = %s\n", param.Name, param.Value)
 					t := types[e.FunctionName][i]
-					// TODO: more types
-					switch t {
-					case "int":
-						if v, err := strconv.Atoi(param.Value); err == nil {
-							ele.params = append(ele.params, v)
-						} else {
-							return nil, ErrWrongParameterType.WithArgs(i, param.Name, t, param.Value)
-						}
-					default:
-						ele.params = append(ele.params, param.Value)
+					tmp, err := interpreter.Eval(param.Value)
+					if err != nil || tmp.Type().String() != types[e.FunctionName][i] {
+						return nil, ErrWrongParameterType.WithArgs(i, param.Name, t, param.Value)
 					}
+					// fmt.Printf("-----=====%v:%v:%v\n", tmp, tmp.Interface(), tmp.Type())
+					ele.params = append(ele.params, tmp)
 				}
 				fmt.Println()
 				res.content = append(res.content, ele)
