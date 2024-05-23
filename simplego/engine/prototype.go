@@ -94,6 +94,8 @@ func updateFunc[T any](f *T, i *interp.Interpreter, name string) error {
 	v, err := i.Eval(name)
 	if err == nil {
 		*f = v.Interface().(T)
+	} else {
+		panic(err)
 	}
 	return err
 }
@@ -112,12 +114,15 @@ func ParseComponent[P any](wrapper any, sig P, content string, name string, args
 		"fake.com/engine/proto/.": {
 			"StreamInfo": reflect.ValueOf((*StreamInfo)(nil)),
 			"ClientInfo": reflect.ValueOf((*ClientInfo)(nil)),
+			"Mixed":      reflect.ValueOf((*Mixed)(nil)),
 		},
 	}); err != nil {
+		panic(err)
 		return out, err
 	}
 
 	if _, err = i.Eval(content); err != nil {
+		panic(err)
 		return out, err
 	}
 	if err := updateFunc(&res, i, name); err != nil {
@@ -164,16 +169,17 @@ func ParseAll() error {
 		if err != nil {
 			return err
 		}
-		cs := []ComponentForHook1{}
+		cs := []ComponentForAny{}
 		for _, rc := range p.content {
-			c, err := ParseComponent(rc.wrapper, hook1Stub, rc.content, rc.name, rc.params...)
+			c, err := ParseComponent(rc.wrapper, anyStub, rc.content, rc.name, rc.params...)
 			if err != nil {
+				log.Printf("content: %v", p.content)
 				panic(err)
 			}
 			cs = append(cs, c)
 		}
-		compiled := Compose(cs)
-		H.router.Register(b.t, b.sid, b.appid, b.clienttype, compiled)
+		compiled := ComposeAny(cs)
+		A.router.Register(b.t, b.sid, b.appid, b.clienttype, compiled)
 	}
 	return nil
 }
@@ -256,11 +262,11 @@ func ParseP(content string, name string) (*RawPipeline, error) {
 					"WrappedAny": []string{"any"},
 				}
 				contents := map[string]string{
-					"WrappedC1":  c1,
-					"WrappedC2":  c2,
+					"WrappedC1":  c1_,
+					"WrappedC2":  c2_,
 					"WrappedC3":  "",
 					"WrappedC4":  "",
-					"WrappedAny": cany,
+					"WrappedAny": cany_,
 				}
 				stubKey := fmt.Sprintf("<%s>", strings.Join(types[e.FunctionName], ","))
 				stub := wrapperMap[stubKey]
@@ -314,10 +320,16 @@ func ParseP(content string, name string) (*RawPipeline, error) {
 	return res, nil
 }
 
+// var wrapperMap = map[string]any{
+// 	"<int>": wrapperC1Stub,
+// 	"<>":    wrapperC2Stub,
+// 	"<any>": wrapperAnyStub,
+// }
+
 var wrapperMap = map[string]any{
-	"<int>": wrapperC1Stub,
-	"<>":    wrapperC2Stub,
-	"<any>": wrapperAnyStub,
+	"<int>": anyWrapperInt,
+	"<>":    anyWrapperEmpty,
+	"<any>": anyWrapperAny,
 }
 
 func ParsePipeline(content string, name string) (*RawPipeline, error) {
@@ -455,10 +467,6 @@ var hook1Stub = func(*StreamInfo, *ClientInfo) (int, int, int, int) {
 	return 0, 0, 0, 0
 }
 
-var anyStub = func(any) (any, int) {
-	return 0, 0
-}
-
 var H *DispatcherHook1 = &DispatcherHook1{}
 
 func (h *DispatcherHook1) Init() {
@@ -471,6 +479,7 @@ func GetRuntimeGroupID(s *StreamInfo, c *ClientInfo) (int, int, int) {
 
 func Init() error {
 	H.Init()
+	A.Init()
 	return ParseAll()
 }
 
