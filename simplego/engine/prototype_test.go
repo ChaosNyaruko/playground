@@ -164,7 +164,19 @@ func TestRuntimeGroupID(t *testing.T) {
 }
 
 func TestParseP(t *testing.T) {
-	engine.ParseP("", "")
+	// Test the expressions
+	expressions := []string{
+		"WrappedC1(bound=50)+WrappedC2()",
+		// "single()",
+		// "lowscore(bound=10)",
+		// "usersample(rate=0.1,enabled=true)",
+		// "mutilple(a=1,b=2)+single()",
+		// "lowscore(bound=10)+usersample(rate=0.1,enabled=true)+mutilple(a=1,b=2)+single()",
+		// "lowscore(bound=10)+usersample(rate=0.1,enabled=true)+mutilple(a=1,b=2)+single()+testing(a=1,b=2,c=3,d=4)",
+	}
+	for _, e := range expressions {
+		engine.ParseP(e, "")
+	}
 }
 
 func TestX(t *testing.T) {

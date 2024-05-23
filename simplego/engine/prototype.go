@@ -8,6 +8,7 @@ import (
 	"log"
 	"reflect"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/traefik/yaegi/interp"
@@ -79,9 +80,9 @@ func updateFunc[T any](f *T, i *interp.Interpreter, name string) {
 	}
 }
 
-func ParseComponent[T any, P any](wrapper T, sig P, content string, name string, args ...any) (P, error) {
+func ParseComponent[P any](wrapper any, sig P, content string, name string, args ...any) (P, error) {
 	var err error
-	var res T
+	var res any
 	log.Printf("wrapper: %T, sig: %T, res: %T", wrapper, sig, res)
 	var out P
 	r := reflect.TypeOf(wrapper) // Why not res, T is literally an interface
@@ -130,11 +131,15 @@ func ParseAll() error {
 	}
 	// TODO: read from DB or some kind of metadata
 	bizs := []biz{
-		{"normal", 0, 1128, 4, "1(bound=50)+2", "dispatcher_grouping"},
-		{"normal", 0, 1128, 1, "2+1(bound=50)", "dispatcher_grouping"},
+		// {"normal", 0, 1128, 4, "1(bound=50)+2", "dispatcher_grouping"},
+		// {"normal", 0, 1128, 1, "2+1(bound=50)", "dispatcher_grouping"},
+		{"normal", 0, 1128, 4, "WrappedC1(bound=50)+WrappedC2()", "dispatcher_grouping"},
+		{"normal", 0, 1128, 1, "WrappedC2()+WrappedC1(bound=50)", "dispatcher_grouping"},
+		// {"normal", 0, 1128, 4, "WrappedC1(bound=50)+WrappedC2", "dispatcher_grouping"},
+		// {"normal", 0, 1128, 1, "WrappedC2+WrappedC1(bound=50)", "dispatcher_grouping"},
 	}
 	for _, b := range bizs {
-		p, err := ParsePipeline(b.content, b.name)
+		p, err := ParseP(b.content, b.name)
 		if err != nil {
 			return err
 		}
@@ -164,30 +169,17 @@ type contentWithParams struct {
 	wrapper interface{}
 }
 
-func ParseP(content string, name string) { //(*RawPipeline, error) {
+func ParseP(content string, name string) (*RawPipeline, error) {
 	// Compile the regular expression
 	re, err := regexp.Compile(`(\w+)\(((?:\s*\w+\s*=\s*[^,)]+\s*,?)*)\)`)
 	if err != nil {
-		fmt.Println("Error compiling regex:", err)
-		return
+		return nil, fmt.Errorf("Error compiling regex: %v", err)
 	}
 
-	// Test the expressions
-	expressions := []string{
-		"single()",
-		"lowscore(bound=10)",
-		"usersample(rate=0.1,enabled=true)",
-		"mutilple(a=1,b=2)+single()",
-		"lowscore(bound=10)+usersample(rate=0.1,enabled=true)+mutilple(a=1,b=2)+single()",
-		"lowscore(bound=10)+usersample(rate=0.1,enabled=true)+mutilple(a=1,b=2)+single()+testing(a=1,b=2,c=3,d=4)",
-	}
-
-	for _, expr := range expressions {
-		if re.MatchString(expr) {
-			fmt.Printf("Expression '%s' matches the regex\n", expr)
-		} else {
-			fmt.Printf("Expression '%s' does not match the regex\n", expr)
-		}
+	if re.MatchString(content) {
+		fmt.Printf("Expression '%s' matches the regex\n", content)
+	} else {
+		return nil, fmt.Errorf("Expression '%s' does not match the regex\n", content)
 	}
 
 	type Parameter struct {
@@ -198,54 +190,99 @@ func ParseP(content string, name string) { //(*RawPipeline, error) {
 		FunctionName string
 		Parameters   []Parameter
 	}
+	res := &RawPipeline{
+		content: []contentWithParams{},
+	}
+	var allExpressions []Expression
+	fmt.Println(content, "------")
+	subExpressions := strings.Split(content, "+")
+	for _, subExpr := range subExpressions {
+		if matches := re.FindAllStringSubmatch(subExpr, -1); matches != nil {
+			for _, match := range matches {
+				var e Expression
+				e.FunctionName = match[1]
 
-	for _, expr := range expressions {
-		var allExpressions []Expression
-		fmt.Println(expr, "------")
-		subExpressions := strings.Split(expr, "+")
-		for _, subExpr := range subExpressions {
-			if matches := re.FindAllStringSubmatch(subExpr, -1); matches != nil {
-				for _, match := range matches {
-					var e Expression
-					e.FunctionName = match[1]
-
-					paramStr := match[2]
-					params := strings.Split(paramStr, ",")
-					for _, param := range params {
-						if param = strings.TrimSpace(param); param != "" {
-							parts := strings.Split(param, "=")
-							if len(parts) == 2 {
-								e.Parameters = append(e.Parameters, Parameter{
-									Name:  strings.TrimSpace(parts[0]),
-									Value: strings.TrimSpace(parts[1]),
-								})
-							}
+				paramStr := match[2]
+				params := strings.Split(paramStr, ",")
+				for _, param := range params {
+					if param = strings.TrimSpace(param); param != "" {
+						parts := strings.Split(param, "=")
+						if len(parts) == 2 {
+							e.Parameters = append(e.Parameters, Parameter{
+								Name:  strings.TrimSpace(parts[0]),
+								Value: strings.TrimSpace(parts[1]),
+							})
 						}
 					}
-
-					fmt.Printf("Expression: %s\n", e.FunctionName)
-					for _, param := range e.Parameters {
-						fmt.Printf("  - %s = %s\n", param.Name, param.Value)
-					}
-					fmt.Println()
 				}
-			} else {
-				fmt.Printf("Expression '%s' does not match the regex\n", subExpr)
-			}
-		}
 
-		for _, e := range allExpressions {
-			fmt.Printf("Expression: %s\n", e.FunctionName)
-			for _, param := range e.Parameters {
-				fmt.Printf("  - %s = %s\n", param.Name, param.Value)
+				fmt.Printf("Expression: %s\n", e.FunctionName)
+				// TODO: query DB to get the signature, i.e. the arguments' types
+				// e.g. WrappedC1: -> "int"
+				// e.g. WrappedC2: -> ""
+				// e.g. WrappedC3: -> "string"
+				// e.g. WrappedC4: -> "int,string,float64,bool"
+				// this prototype are just mocking.
+				// TODO: we also need a validation.
+				types := map[string]string{
+					"WrappedC1": "int",
+					"WrappedC2": "",
+					"WrappedC3": "string",
+					"WrappedC4": "int,string,float64,bool",
+				}
+				contents := map[string]string{
+					"WrappedC1": c1,
+					"WrappedC2": c2,
+					"WrappedC3": "",
+					"WrappedC4": "",
+				}
+				stub := wrapperMap[fmt.Sprintf("<%s>", types[e.FunctionName])]
+				if stub == nil {
+					fmt.Printf("nil stub for %q, please check!", e.FunctionName)
+				}
+				ele := contentWithParams{
+					name:    e.FunctionName,
+					content: contents[e.FunctionName],
+					params:  []any{},
+					wrapper: stub,
+				}
+
+				for _, param := range e.Parameters {
+					fmt.Printf("  - %s = %s\n", param.Name, param.Value)
+					if v, err := strconv.Atoi(param.Value); err != nil {
+						// TODO: more types
+						ele.params = append(ele.params, param.Value)
+					} else {
+						ele.params = append(ele.params, v)
+					}
+				}
+				fmt.Println()
+				res.content = append(res.content, ele)
 			}
-			fmt.Println()
+		} else {
+			fmt.Printf("Expression '%s' does not match the regex\n", subExpr)
 		}
 	}
+
+	for _, e := range allExpressions {
+		fmt.Printf("Expression: %s\n", e.FunctionName)
+		for _, param := range e.Parameters {
+			fmt.Printf("  - %s = %s\n", param.Name, param.Value)
+		}
+		fmt.Println()
+	}
+	fmt.Printf("res: %+v\n", res)
+	return res, nil
 }
+
+var wrapperMap = map[string]any{
+	"<int>": wrapperC1Stub,
+	"<>":    wrapperC2Stub,
+}
+
 func ParsePipeline(content string, name string) (*RawPipeline, error) {
 	// TODO: just a mock, need a real parser here, maybe a manual one rather than regex is easier
-	if content == "1(bound=50)+2" {
+	if content == "WrappedC1(bound=50)+WrappedC2()" {
 		return &RawPipeline{
 			content: []contentWithParams{{"WrappedC1", c1, []any{50}, wrapperC1Stub}, {"WrappedC2", c2, []any{}, wrapperC2Stub}},
 		}, nil
