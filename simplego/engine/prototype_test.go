@@ -142,14 +142,14 @@ func TestRuntimeGroupID(t *testing.T) {
 
 	// douyin ios
 	// f hits the first condition, and quits, g has no effect.
-	id, reset, code := engine.GetRuntimeGroupIDAny(x, 1128, 4, 0, "")
+	id, reset, code := engine.GetRuntimeGroupID1(x, 1128, 4, 0, "")
 	assert.Equal(t, 2003, id)
 	assert.Equal(t, 1, reset)
 	assert.Equal(t, 233, code)
 
 	// f misses all its conditions, but returns quit=0, so continue g
 	x.Concurrent = 0
-	id, reset, code = engine.GetRuntimeGroupIDAny(x, 1128, 4, 0, "")
+	id, reset, code = engine.GetRuntimeGroupID1(x, 1128, 4, 0, "")
 	assert.Equal(t, 2002, id)
 	assert.Equal(t, 0, reset)
 	assert.Equal(t, 235, code)
@@ -158,7 +158,7 @@ func TestRuntimeGroupID(t *testing.T) {
 	// g hits the first condition, and quits, f has no effect.
 	x.Concurrent = 137
 	// id, reset, code = engine.GetRuntimeGroupID(x, y)
-	id, reset, code = engine.GetRuntimeGroupIDAny(x, 1128, 1, 0, "")
+	id, reset, code = engine.GetRuntimeGroupID1(x, 1128, 1, 0, "")
 	assert.Equal(t, 2003, id)
 	assert.Equal(t, 1, reset)
 	assert.Equal(t, 300, code)

@@ -179,7 +179,7 @@ func ParseAll() error {
 			cs = append(cs, c)
 		}
 		compiled := ComposeAny(cs)
-		A.router.Register(b.t, b.sid, b.appid, b.clienttype, compiled)
+		A.router.Register(b.name, b.t, b.sid, b.appid, b.clienttype, compiled)
 	}
 	return nil
 }
@@ -478,7 +478,7 @@ func GetRuntimeGroupID(s *StreamInfo, c *ClientInfo) (int, int, int) {
 }
 
 func Init() error {
-	H.Init()
+	// H.Init()
 	A.Init()
 	return ParseAll()
 }

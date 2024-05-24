@@ -1,6 +1,8 @@
 package engine
 
-import "fmt"
+import (
+	"fmt"
+)
 
 var cany_ = `
 	import (
@@ -87,37 +89,51 @@ func (p PipelineForAny) Execute(s any) (id, reset, code int) {
 }
 
 type RouterAny struct {
+	hooks map[string]*routerAny
+}
+
+type routerAny struct {
 	normal   map[int]map[int]PipelineForAny
 	override map[int]PipelineForAny
 }
 
-func (r *RouterAny) Init() error {
+func (r *routerAny) Init() error {
 	r.normal = make(map[int]map[int]PipelineForAny)
 	r.override = make(map[int]PipelineForAny)
 	return nil
 }
 
-func (r *RouterAny) Register(t string, sid, appID, clientType int, p PipelineForAny) error {
+func (r *RouterAny) Register(hookName string, t string, sid, appID, clientType int, p PipelineForAny) error {
+	if h, _ := r.hooks[hookName]; h == nil {
+		a := routerAny{}
+		a.Init()
+		r.hooks[hookName] = &a
+	}
+	h := r.hooks[hookName]
 	switch t {
 	case "override":
-		r.override[sid] = p
+		h.override[sid] = p
 	case "normal":
-		if _, ok := r.normal[appID]; !ok {
-			r.normal[appID] = make(map[int]PipelineForAny)
+		if _, ok := h.normal[appID]; !ok {
+			h.normal[appID] = make(map[int]PipelineForAny)
 		}
-		r.normal[appID][clientType] = p
+		h.normal[appID][clientType] = p
 	default:
 		return fmt.Errorf("unexpected type for register: %v", t)
 	}
 	return nil
 }
 
-func (r *RouterAny) Get(appid int, clienttype int, sid int, extra string) PipelineForAny {
+func (r *routerAny) Get(appid int, clienttype int, sid int, extra string) PipelineForAny {
 	// TODO: just a demo, no error handling yet
 	if p, ok := r.override[sid]; ok {
 		return p
 	}
 	return r.normal[appid][clienttype]
+}
+
+func (r *RouterAny) Get(hook string, appid int, clienttype int, sid int, extra string) PipelineForAny {
+	return r.hooks[hook].Get(appid, clienttype, sid, extra)
 }
 
 type HookAny struct {
@@ -127,11 +143,15 @@ type HookAny struct {
 var A *HookAny = &HookAny{}
 
 func (h *HookAny) Init() {
-	_ = h.router.Init()
+	h.router.hooks = make(map[string]*routerAny)
 }
 
-func GetRuntimeGroupIDAny(s any, appid int, clienttype int, sid int, extra string) (int, int, int) {
-	return A.router.Get(appid, clienttype, sid, extra).Execute(s)
+func GetRuntimeGroupIDAny(hookName string, s any, appid int, clienttype int, sid int, extra string) (int, int, int) {
+	return A.router.hooks[hookName].Get(appid, clienttype, sid, extra).Execute(s)
+}
+
+func GetRuntimeGroupID1(s any, appid int, clienttype int, sid int, extra string) (int, int, int) {
+	return A.router.hooks["dispatcher_grouping"].Get(appid, clienttype, sid, extra).Execute(s)
 }
 
 var anyWrapperInt = func(int) ComponentForAny {
