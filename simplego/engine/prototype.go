@@ -105,6 +105,7 @@ func ParseComponent[P any](wrapper any, sig P, content string, name string, args
 	var res any
 	log.Printf("wrapper: %T, sig: %T, res: %T", wrapper, sig, res)
 	var out P
+
 	r := reflect.TypeOf(wrapper) // Why not res, T is literally an interface
 	if r.Kind() != reflect.Func {
 		return out, fmt.Errorf("the res must be a func type, but got %v", r.Kind())
@@ -162,7 +163,7 @@ func ParseAll() error {
 		{"normal", 0, 1128, 4, "WrappedAny(bound=50)+WrappedC2()", "dispatcher_grouping"},
 		{"normal", 0, 1128, 1, "WrappedC2()+WrappedC1(bound=50)", "dispatcher_grouping"},
 		// {"normal", 0, 1128, 4, "WrappedC1(bound=50)+WrappedC2", "dispatcher_grouping"},
-		// {"normal", 0, 1128, 1, "WrappedC2+WrappedC1(bound=50)", "dispatcher_grouping"},
+		// {"normal", 0, 1128, 1, "WrappedC3+WrappedC1(bound=50)", "dispatcher_grouping"},
 	}
 	for _, b := range bizs {
 		p, err := ParseP(b.content, b.name)
