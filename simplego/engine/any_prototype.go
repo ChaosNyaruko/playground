@@ -25,10 +25,20 @@ var cany_ = `
 var c1_ = `
 	import (
 		. "fake.com/engine/proto"
+		"fmt"
+		"encoding/json"
 	)
+
+	type Version struct {
+		Name string 
+	}
 
 	func WrappedC1(bound int) func(any) (int, int, int, int) {
 		x := bound
+		_ = fmt.Sprintf("%v", "Test")
+		var v Version
+		_ = json.Unmarshal([]byte("{\"name\": \"john\"}"), &v) 
+		fmt.Printf("version: %#v\n", v)
 		return func(s any) (id, reset, code, quit int) {
 			if s.(*Mixed).Concurrent > x {
 				return 2003, 1, 233, 1

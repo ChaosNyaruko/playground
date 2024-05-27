@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/traefik/yaegi/interp"
+	"github.com/traefik/yaegi/stdlib"
 )
 
 var cany = `
@@ -111,6 +112,9 @@ func ParseComponent[P any](wrapper any, sig P, content string, name string, args
 		return out, fmt.Errorf("the res must be a func type, but got %v", r.Kind())
 	}
 	i := interp.New(interp.Options{})
+	if err = i.Use(stdlib.Symbols); err != nil {
+		panic(err)
+	}
 	if err = i.Use(interp.Exports{
 		"fake.com/engine/proto/.": {
 			"StreamInfo": reflect.ValueOf((*StreamInfo)(nil)),
