@@ -189,7 +189,7 @@ func TestParseP(t *testing.T) {
 	}
 }
 
-func TestParseAll(t *testing.T) {
+func TestCompile(t *testing.T) {
 	err := engine.Init()
 	assert.Nil(t, err)
 	err = engine.ParseAll()

@@ -66,6 +66,8 @@ var c2_ = `
 	}
 `
 
+// 接口测试工具
+
 type Mixed struct {
 	*StreamInfo
 	*ClientInfo
