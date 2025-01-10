@@ -1,15 +1,12 @@
-package termcolor
-
 //go:build darwin || dragonfly || freebsd || netbsd || openbsd || linux || (!windows && !js)
-// +build darwin dragonfly freebsd netbsd openbsd linux !windows,!js
+
+package main
 
 import (
 	"syscall"
 	"unsafe"
 )
 
-//go:build darwin || dragonfly || freebsd || netbsd || openbsd
-// +build darwin dragonfly freebsd netbsd openbsd
 const ioctlReadTermios = syscall.TIOCGETA // for bsd based
 
 const ioctlReadTermios = 0x5401 // syscall.TCGETS // for linux
@@ -18,9 +15,6 @@ const fadviseDontneed = 4
 /* defined in linux-4.14/include/uapi/linux/fadvise.h
  * #define POSIX_FADV_DONTNEED 4
  */
-
-//go:build linux
-// +build linux
 
 func fadvise(fd int, offset int64, length int64, advice int) (err error) {
 	return unix.Fadvise(fd, offset, length, advice)
