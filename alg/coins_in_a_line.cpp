@@ -47,8 +47,10 @@ void print_moves(int *coins, int n, vector<vector<int>> &memo) {
   bool my_turn = true;
   while (l <= r) {
     // I take l, oppo get ..., I'm try to minimise it.
-    int p1 = memo[l + 1][r];
-    int p2 = memo[l][r - 1];
+    int p1 = (l + 1 <= r) ? memo[l + 1][r] : 0;
+    /* int p1 = memo[l+1][r]; */
+    /* int p2 = memo[l][r - 1]; */
+    int p2 = (l <= r - 1) ? memo[l][r - 1] : 0;
     int taken = l;
     if (p1 <= p2) {
       taken = l;
@@ -57,7 +59,7 @@ void print_moves(int *coins, int n, vector<vector<int>> &memo) {
       taken = r;
       r--;
     }
-    cout << (my_turn ? "I" : "You") << " took " << taken + 1<< endl;
+    cout << (my_turn ? "I" : "You") << " took " << taken + 1 << endl;
     my_turn = !my_turn;
   }
 }
